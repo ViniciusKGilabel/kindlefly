@@ -2,3 +2,8 @@
 .claude/agents/
 .superpowers/
 .worktrees/
+keys/
+.env*.local
+node_modules/
+.output/
+.wxt/

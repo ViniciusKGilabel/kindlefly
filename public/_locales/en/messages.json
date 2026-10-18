@@ -1,0 +1,35 @@
+{
+  "extName": {
+    "message": "kindlefly"
+  },
+  "extDescription": {
+    "message": "Turn web pages into EPUB and send them to your Kindle via Gmail."
+  },
+  "error_not_connected": {
+    "message": "Not connected to Google. Connect your account first."
+  },
+  "error_auth_cancelled": {
+    "message": "Sign-in was cancelled. You can try again."
+  },
+  "error_auth_failed": {
+    "message": "Google sign-in failed. Please try again."
+  },
+  "error_kindle_address_missing": {
+    "message": "Set your Kindle address in the settings first."
+  },
+  "error_kindle_address_invalid": {
+    "message": "The Kindle address must end with @kindle.com."
+  },
+  "error_too_large": {
+    "message": "The content is too large to send by email."
+  },
+  "error_network": {
+    "message": "Network error. Check your connection and try again."
+  },
+  "error_gmail_error": {
+    "message": "Gmail could not send the message."
+  },
+  "error_extract_failed": {
+    "message": "Could not extract the content of this page."
+  }
+}

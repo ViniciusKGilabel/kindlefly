@@ -1,0 +1,35 @@
+{
+  "extName": {
+    "message": "kindlefly"
+  },
+  "extDescription": {
+    "message": "Transforme páginas da web em EPUB e envie para o seu Kindle pelo Gmail."
+  },
+  "error_not_connected": {
+    "message": "Não conectado ao Google. Conecte sua conta primeiro."
+  },
+  "error_auth_cancelled": {
+    "message": "O login foi cancelado. Você pode tentar de novo."
+  },
+  "error_auth_failed": {
+    "message": "Falha no login do Google. Tente novamente."
+  },
+  "error_kindle_address_missing": {
+    "message": "Defina o endereço do seu Kindle nas configurações."
+  },
+  "error_kindle_address_invalid": {
+    "message": "O endereço do Kindle deve terminar em @kindle.com."
+  },
+  "error_too_large": {
+    "message": "O conteúdo é grande demais para enviar por e-mail."
+  },
+  "error_network": {
+    "message": "Erro de rede. Verifique sua conexão e tente novamente."
+  },
+  "error_gmail_error": {
+    "message": "O Gmail não conseguiu enviar a mensagem."
+  },
+  "error_extract_failed": {
+    "message": "Não foi possível extrair o conteúdo desta página."
+  }
+}
