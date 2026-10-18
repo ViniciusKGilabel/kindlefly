@@ -21,7 +21,7 @@ test('remove onclick, javascript:, iframe, form, script, img', () => {
     expect(b).not.toContain(bad);
   }
   expect(b).toContain('https://example.com/a?b=1&amp;c=2');
-  expect(b).toContain('href="#frag"');
+  expect(b).not.toContain('#frag');
   expect(b).not.toContain('/rel');
 });
 
