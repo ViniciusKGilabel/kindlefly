@@ -17,6 +17,10 @@ describe('locales', () => {
     for (const code of ALL_ERROR_CODES) expect(keys('en')).toContain(`error_${code}`);
   });
 
+  test('extName e extDescription existem em todos os locales', () => {
+    for (const l of ['pt_BR', 'en', 'es']) expect(keys(l)).toEqual(expect.arrayContaining(['extName', 'extDescription']));
+  });
+
   test('toda mensagem tem texto não vazio', () => {
     for (const l of ['pt_BR', 'en', 'es'])
       for (const [k, v] of Object.entries(readJson(`public/_locales/${l}/messages.json`)))
