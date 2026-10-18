@@ -8,7 +8,8 @@
     "build": "wxt build",
     "postinstall": "wxt prepare",
     "test": "vitest run",
-    "gen-key": "node scripts/gen-key.mjs"
+    "gen-key": "node scripts/gen-key.mjs",
+    "epubcheck": "node scripts/epubcheck.mjs"
   },
   "dependencies": {
     "@mozilla/readability": "0.6.0",
