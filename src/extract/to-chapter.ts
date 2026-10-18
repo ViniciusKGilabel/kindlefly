@@ -8,12 +8,12 @@ const KNOWN = new Set(
     'section small span strong sub summary sup table tbody td tfoot th thead time tr u ul var wbr').split(' '),
 );
 // atributo -> elementos onde é permitido
-const KEEP_ATTRS: Record<string, string[] | null> = {
-  href: ['a'],
-  colspan: ['td', 'th'],
-  rowspan: ['td', 'th'],
-  title: null,
-};
+const KEEP_ATTRS = new Map<string, string[] | null>([
+  ['href', ['a']],
+  ['colspan', ['td', 'th']],
+  ['rowspan', ['td', 'th']],
+  ['title', null],
+]);
 const XML_FORBIDDEN = /[\x00-\x08\x0B\x0C\x0E-\x1F\uFFFE\uFFFF]/g;
 
 function unwrap(el: Element): void {
@@ -32,7 +32,7 @@ export function htmlToChapter(html: string, opts: { id: string; title: string })
   for (const el of Array.from(body.querySelectorAll('*'))) {
     for (const attr of Array.from(el.attributes)) {
       const name = attr.name.toLowerCase();
-      const allowed = KEEP_ATTRS[name];
+      const allowed = KEEP_ATTRS.get(name);
       if (allowed === undefined || (allowed && !allowed.includes(el.localName))) {
         el.removeAttribute(attr.name);
       } else if (name === 'href' && !/^\s*(https?:|#)/i.test(attr.value)) {

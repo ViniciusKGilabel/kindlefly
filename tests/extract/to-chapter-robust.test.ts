@@ -61,3 +61,12 @@ test.skipIf(!hasJava)('conteúdo sujo passa no epubcheck', async () => {
   const r = spawnSync('node', ['scripts/epubcheck.mjs', file], { encoding: 'utf8' });
   expect(r.stdout + r.stderr).toContain('No errors or warnings detected');
 }, 120_000);
+
+test('atributos com nomes herdados de Object (constructor, toString, __proto__) são descartados sem erro', () => {
+  const html =
+    '<p constructor="1" tostring="2" __proto__="3" hasownproperty="4" valueof="5">a</p>';
+  let b = '';
+  expect(() => { b = htmlToChapter(html, o).xhtmlBody; }).not.toThrow();
+  expect(b).toContain('>a</p>');
+  expect(b).not.toMatch(/constructor|tostring|__proto__|hasownproperty|valueof/i);
+});
