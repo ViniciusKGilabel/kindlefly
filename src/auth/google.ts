@@ -1,7 +1,8 @@
 import { browser } from 'wxt/browser';
 import { KfError } from '../core/errors';
 
-export const GOOGLE_SCOPES = ['openid', 'email', 'https://www.googleapis.com/auth/gmail.send'] as const;
+export const GMAIL_SEND_SCOPE = 'https://www.googleapis.com/auth/gmail.send';
+export const GOOGLE_SCOPES = ['openid', 'email', GMAIL_SEND_SCOPE] as const;
 
 const AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
 const REVOKE_ENDPOINT = 'https://oauth2.googleapis.com/revoke';
@@ -65,6 +66,10 @@ export function parseAuthRedirect(
   const accessToken = params.get('access_token');
   const idToken = params.get('id_token');
   if (!accessToken || !idToken) throw new KfError('auth_failed', 'missing token in redirect');
+
+  // O usuário pode desmarcar a permissão de envio na tela de consentimento.
+  const granted = (params.get('scope') ?? '').split(/\s+/);
+  if (!granted.includes(GMAIL_SEND_SCOPE)) throw new KfError('scope_missing');
 
   const payload = decodeJwtPayload(idToken);
   if (payload.nonce !== expectedNonce) throw new KfError('auth_failed', 'nonce mismatch');

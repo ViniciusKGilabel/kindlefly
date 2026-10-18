@@ -94,5 +94,14 @@
   },
   "retryExtract": {
     "message": "Reintentar"
+  },
+  "error_scope_missing": {
+    "message": "No se concedió el permiso de envío de correo. Vuelve a conectar la cuenta y marca el permiso de Gmail para enviar correos."
+  },
+  "error_unexpected": {
+    "message": "Ocurrió un error inesperado."
+  },
+  "extractThisTab": {
+    "message": "Extraer esta pestaña"
   }
 }

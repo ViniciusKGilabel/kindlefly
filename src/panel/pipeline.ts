@@ -8,15 +8,17 @@ export async function itemToEpub(
   item: ExtractedItem,
   edits: { title: string; author: string },
 ): Promise<EpubFile> {
-  const chapter = htmlToChapter(item.html, { id: 'c1', title: edits.title });
+  const chapter = htmlToChapter(item.html, { id: 'c1', title: edits.title.trim() || item.title });
+  const title = edits.title.trim() || chapter.title.trim() || 'kindlefly';
+  const author = edits.author.trim() || item.author.trim() || 'kindlefly';
   const book: Book = {
-    title: edits.title,
-    author: edits.author,
+    title,
+    author,
     language: item.language || 'en',
     identifier: 'urn:uuid:' + crypto.randomUUID(),
     modified: new Date(),
     chapters: [chapter],
     images: [],
   };
-  return { filename: sanitizeFilename(edits.title) + '.epub', data: await buildEpub(book) };
+  return { filename: sanitizeFilename(title) + '.epub', data: await buildEpub(book) };
 }

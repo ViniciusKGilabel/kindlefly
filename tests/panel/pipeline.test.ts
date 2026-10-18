@@ -25,6 +25,29 @@ test('itemToEpub usa título e autor editados e o nome sanitizado', async () => 
   expect(opf).toContain('<dc:language>pt-BR</dc:language>');
 });
 
+test('título vazio cai para o título extraído; autor vazio para o extraído', async () => {
+  const file = await itemToEpub(item, { title: '   ', author: '' });
+  const opf = await (await JSZip.loadAsync(file.data)).file('OEBPS/content.opf')!.async('string');
+  expect(opf).toContain('<dc:title>Original</dc:title>');
+  expect(opf).toContain('<dc:creator>Site</dc:creator>');
+  expect(file.filename).toBe('Original.epub');
+});
+
+test('título e autor vazios em tudo → dc:title e dc:creator não vazios', async () => {
+  const file = await itemToEpub({ ...item, title: '', author: '' }, { title: '', author: '' });
+  const opf = await (await JSZip.loadAsync(file.data)).file('OEBPS/content.opf')!.async('string');
+  expect(opf).toMatch(/<dc:title>[^<]+<\/dc:title>/);
+  expect(opf).toContain('<dc:creator>kindlefly</dc:creator>');
+});
+
+test.skipIf(!hasJava)('título vazio gera EPUB válido no epubcheck', async () => {
+  const file = await itemToEpub(item, { title: '', author: '' });
+  const p = join(mkdtempSync(join(tmpdir(), 'kf-')), 'a.epub');
+  writeFileSync(p, file.data);
+  const r = spawnSync('node', ['scripts/epubcheck.mjs', p], { encoding: 'utf8' });
+  expect(r.stdout + r.stderr).toContain('No errors or warnings detected');
+}, 120_000);
+
 test('idioma ausente cai para en', async () => {
   const file = await itemToEpub({ ...item, language: '' }, edits);
   const opf = await (await JSZip.loadAsync(file.data)).file('OEBPS/content.opf')!.async('string');

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { createGoogleAuth } from '../../src/auth/google';
 import { t } from '../../src/core/i18n';
 import type { EpubFile, ExtractedItem } from '../../src/core/types';
+import { KfError } from '../../src/core/errors';
 import { errorMessage, extractActiveTab } from '../../src/panel/extract-active';
 import { itemToEpub } from '../../src/panel/pipeline';
 import { htmlToChapter } from '../../src/extract/to-chapter';
@@ -26,6 +27,26 @@ function download(file: EpubFile) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+function unexpected(e: unknown): string {
+  console.warn('[kindlefly]', 'unexpected', e instanceof Error ? e.message : String(e));
+  return t('error_unexpected');
+}
+
+function onPreviewClick(e: MouseEvent<HTMLElement>) {
+  const a = (e.target as HTMLElement).closest('a');
+  if (!a) return;
+  e.preventDefault();
+  const href = a.getAttribute('href') ?? '';
+  try {
+    const u = new URL(href, 'https://invalid.invalid/');
+    if (href && (u.protocol === 'http:' || u.protocol === 'https:') && u.host !== 'invalid.invalid') {
+      void browser.tabs.create({ url: u.href });
+    }
+  } catch {
+    // href inválido: ignora.
+  }
 }
 
 export default function Home() {
@@ -56,7 +77,7 @@ export default function Home() {
   // Já sanitizado por htmlToChapter (sem scripts, handlers nem iframes): só então vai para o DOM.
   const previewHtml = useMemo(
     () => (item ? htmlToChapter(item.html, { id: 'c1', title }).xhtmlBody : ''),
-    [item],
+    [item, title],
   );
 
   const full = item ? { ...item, id: 'current' } : null;
@@ -67,7 +88,7 @@ export default function Home() {
     try {
       download(await itemToEpub(full, { title, author }));
     } catch (e) {
-      setStatus({ s: 'error', text: errorMessage(e, t) });
+      setStatus({ s: 'error', text: e instanceof KfError ? errorMessage(e, t) : unexpected(e) });
     }
   }
 
@@ -127,8 +148,11 @@ export default function Home() {
               {t('sendToKindle')}
             </button>
           </div>
+          <button type="button" onClick={extract} disabled={busy}>
+            {t('extractThisTab')}
+          </button>
           <h2>{t('previewLabel')}</h2>
-          <article className="preview" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+          <article className="preview" onClick={onPreviewClick} dangerouslySetInnerHTML={{ __html: previewHtml }} />
         </>
       )}
     </section>

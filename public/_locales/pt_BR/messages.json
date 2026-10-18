@@ -94,5 +94,14 @@
   },
   "retryExtract": {
     "message": "Tentar de novo"
+  },
+  "error_scope_missing": {
+    "message": "A permissão de envio de e-mail não foi concedida. Conecte a conta de novo e marque a permissão do Gmail para enviar e-mails."
+  },
+  "error_unexpected": {
+    "message": "Ocorreu um erro inesperado."
+  },
+  "extractThisTab": {
+    "message": "Extrair esta aba"
   }
 }

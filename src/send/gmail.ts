@@ -25,7 +25,7 @@ async function post(raw: string, token: string, fetchFn: typeof fetch): Promise<
 }
 
 function check(res: Response): void {
-  if (!res.ok) throw new KfError('gmail_error', `status ${res.status}`);
+  if (!res.ok) throw new KfError('gmail_error', `status ${res.status}`, res.status);
 }
 
 export async function sendRawMessage(raw: string, token: string, fetchFn: typeof fetch): Promise<void> {

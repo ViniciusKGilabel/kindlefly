@@ -15,11 +15,12 @@ function b64url(obj: unknown): string {
 function idToken(payload: Record<string, unknown>): string {
   return `${b64url({ alg: 'RS256' })}.${b64url(payload)}.sig`;
 }
-function redirect(o: { nonce: string; email: string; token?: string; expiresIn?: number }): string {
+function redirect(o: { nonce: string; email: string; token?: string; expiresIn?: number; scope?: string }): string {
   const p = new URLSearchParams({
     access_token: o.token ?? 'tok',
     expires_in: String(o.expiresIn ?? 3600),
     token_type: 'Bearer',
+    scope: o.scope ?? 'openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/gmail.send',
     id_token: idToken({ email: o.email, nonce: o.nonce }),
   });
   return `${REDIRECT}#${p.toString()}`;
@@ -107,6 +108,14 @@ describe('parseAuthRedirect', () => {
   test('outro error → auth_failed', () => {
     expect(() => parseAuthRedirect(`${REDIRECT}#error=login_required`, 'n', NOW)).toThrowError(/^auth_failed/);
   });
+  test('scope sem gmail.send → scope_missing', () => {
+    const r = redirect({ nonce: 'n', email: 'u@g.com', scope: 'openid https://www.googleapis.com/auth/userinfo.email' });
+    expect(() => parseAuthRedirect(r, 'n', NOW)).toThrowError(/^scope_missing/);
+  });
+  test('sem parâmetro scope → scope_missing', () => {
+    const r = redirect({ nonce: 'n', email: 'u@g.com' }).replace(/&scope=[^&]*/, '');
+    expect(() => parseAuthRedirect(r, 'n', NOW)).toThrowError(/^scope_missing/);
+  });
   test('nonce errado → auth_failed', () => {
     expect(() => parseAuthRedirect(redirect({ nonce: 'x', email: 'u@g.com' }), 'n', NOW)).toThrowError(/^auth_failed/);
   });
@@ -129,6 +138,21 @@ describe('GoogleAuth', () => {
     expect(calls[0]!.url.searchParams.get('redirect_uri')).toBe(REDIRECT);
     expect(await st.getEmail()).toBe('u@gmail.com');
     expect((await st.getToken())?.accessToken).toBe('new');
+  });
+
+  test('connect sem gmail.send → scope_missing, estado intacto', async () => {
+    const { identity } = fakeIdentity((u) => redirect({ nonce: u.searchParams.get('nonce')!, email: 'u@g.com', scope: 'openid' }));
+    const st = memStorage();
+    await expect(mk(identity, st).connect()).rejects.toMatchObject({ code: 'scope_missing' });
+    expect(await st.getToken()).toBeNull();
+    expect(await st.getEmail()).toBeNull();
+  });
+
+  test('renovação (silenciosa e interativa) sem gmail.send → scope_missing', async () => {
+    const { identity, calls } = fakeIdentity((u) => redirect({ nonce: u.searchParams.get('nonce')!, email: 'u@g.com', scope: 'openid' }));
+    const st = memStorage({ email: 'u@g.com', token: { accessToken: 'old', expiresAt: NOW - 1 } });
+    await expect(mk(identity, st).getToken()).rejects.toMatchObject({ code: 'scope_missing' });
+    expect(calls).toHaveLength(2);
   });
 
   test('connect: janela fechada (launchWebAuthFlow rejeita) → auth_cancelled, estado intacto', async () => {

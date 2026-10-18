@@ -74,7 +74,7 @@ describe('sendRawMessage', () => {
   });
   test('401 duas vezes → gmail_error com status', async () => {
     const fetchFn = vi.fn(async () => new Response('', { status: 401 }));
-    await expect(sendWithRetry('raw', fakeAuth(), fetchFn)).rejects.toMatchObject({ code: 'gmail_error', message: expect.stringContaining('401') });
+    await expect(sendWithRetry('raw', fakeAuth(), fetchFn)).rejects.toMatchObject({ code: 'gmail_error', message: expect.stringContaining('401'), status: 401 });
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
   test('500 → gmail_error', async () => {

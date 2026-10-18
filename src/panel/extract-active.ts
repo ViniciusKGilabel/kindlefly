@@ -19,5 +19,12 @@ export function errorMessage(
   e: unknown,
   t: (k: string) => string,
 ): string {
-  return e instanceof KfError ? t('error_' + e.code) : t('error_gmail_error');
+  if (e instanceof KfError) {
+    // message = código + detalhe (status/erro do Google); nunca contém tokens nem corpo de mensagem.
+    console.warn('[kindlefly]', e.code, e.message);
+    const text = t('error_' + e.code);
+    return e.code === 'gmail_error' && e.status !== undefined ? `${text} (HTTP ${e.status})` : text;
+  }
+  console.warn('[kindlefly]', 'unexpected', e instanceof Error ? e.message : String(e));
+  return t('error_gmail_error');
 }

@@ -94,5 +94,14 @@
   },
   "retryExtract": {
     "message": "Try again"
+  },
+  "error_scope_missing": {
+    "message": "The email-sending permission was not granted. Reconnect your account and tick the Gmail send permission."
+  },
+  "error_unexpected": {
+    "message": "An unexpected error occurred."
+  },
+  "extractThisTab": {
+    "message": "Extract this tab"
   }
 }
