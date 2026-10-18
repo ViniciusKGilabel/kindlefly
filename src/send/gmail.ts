@@ -24,18 +24,26 @@ async function post(raw: string, token: string, fetchFn: typeof fetch): Promise<
   }
 }
 
-export async function sendRawMessage(
+function check(res: Response): void {
+  if (!res.ok) throw new KfError('gmail_error', `status ${res.status}`);
+}
+
+export async function sendRawMessage(raw: string, token: string, fetchFn: typeof fetch): Promise<void> {
+  check(await post(raw, token, fetchFn));
+}
+
+/** Sends with a fresh token; on a 401 invalidates, renews and retries once. */
+export async function sendWithRetry(
   raw: string,
-  token: string,
+  auth: Pick<GoogleAuth, 'getToken' | 'invalidate'>,
   fetchFn: typeof fetch,
-  auth?: Pick<GoogleAuth, 'getToken' | 'invalidate'>,
 ): Promise<void> {
-  let res = await post(raw, token, fetchFn);
-  if (res.status === 401 && auth) {
+  let res = await post(raw, await auth.getToken(), fetchFn);
+  if (res.status === 401) {
     await auth.invalidate();
     res = await post(raw, await auth.getToken(), fetchFn);
   }
-  if (!res.ok) throw new KfError('gmail_error', `status ${res.status}`);
+  check(res);
 }
 
 export async function sendToKindle(
@@ -53,7 +61,7 @@ export async function sendToKindle(
   let emailsSent = 0;
   for (const g of groups) {
     const raw = buildMimeMessage({ from, to, subject: d.subject, attachments: g.map((i) => files[i]!) });
-    await sendRawMessage(raw, await d.auth.getToken(), d.fetchFn, d.auth);
+    await sendWithRetry(raw, d.auth, d.fetchFn);
     emailsSent++;
   }
   return { emailsSent, tooLarge: tooLargeNames };

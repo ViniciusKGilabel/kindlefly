@@ -1,9 +1,13 @@
 export const GMAIL_MAX_MESSAGE_BYTES = 25 * 1024 * 1024;
 export const KINDLE_MAX_ATTACHMENTS = 25;
 
+// Headers + part headers; generous so that long RFC 2231-folded filenames
+// (up to ~120 emoji, twice) are always covered.
+const PER_FILE_OVERHEAD = 6144;
+
 export function estimateMimeBytes(rawBytes: number): number {
   const b64 = Math.ceil(rawBytes / 3) * 4;
-  return b64 + Math.ceil(b64 / 76) * 2 + 2048;
+  return b64 + Math.ceil(b64 / 76) * 2 + PER_FILE_OVERHEAD;
 }
 
 export function groupForEmails(files: { size: number }[]): { groups: number[][]; tooLarge: number[] } {

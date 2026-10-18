@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { isKindleAddress, sendRawMessage, sendToKindle } from '../../src/send/gmail';
+import { isKindleAddress, sendRawMessage, sendToKindle, sendWithRetry } from '../../src/send/gmail';
 import { KfError } from '../../src/core/errors';
 
 const ok = () => new Response('{}', { status: 200 });
@@ -67,22 +67,22 @@ describe('sendRawMessage', () => {
   test('401 uma vez → invalida, renova, reenvia', async () => {
     const auth = fakeAuth();
     const fetchFn = vi.fn().mockResolvedValueOnce(new Response('', { status: 401 })).mockResolvedValueOnce(ok());
-    await sendRawMessage('raw', 'tok0', fetchFn, auth);
+    await sendWithRetry('raw', auth, fetchFn);
     expect(auth.invalidate).toHaveBeenCalledTimes(1);
     expect(fetchFn).toHaveBeenCalledTimes(2);
-    expect((fetchFn.mock.calls[1]![1].headers as Record<string, string>).Authorization).toBe('Bearer tok1');
+    expect((fetchFn.mock.calls[1]![1].headers as Record<string, string>).Authorization).toBe('Bearer tok2');
   });
   test('401 duas vezes → gmail_error com status', async () => {
     const fetchFn = vi.fn(async () => new Response('', { status: 401 }));
-    await expect(sendRawMessage('raw', 't', fetchFn, fakeAuth())).rejects.toMatchObject({ code: 'gmail_error', message: expect.stringContaining('401') });
+    await expect(sendWithRetry('raw', fakeAuth(), fetchFn)).rejects.toMatchObject({ code: 'gmail_error', message: expect.stringContaining('401') });
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
   test('500 → gmail_error', async () => {
     const fetchFn = vi.fn(async () => new Response('', { status: 500 }));
-    await expect(sendRawMessage('raw', 't', fetchFn, fakeAuth())).rejects.toMatchObject({ code: 'gmail_error' });
+    await expect(sendWithRetry('raw', fakeAuth(), fetchFn)).rejects.toMatchObject({ code: 'gmail_error' });
   });
   test('fetch rejeita → network', async () => {
     const fetchFn = vi.fn(async () => { throw new TypeError('x'); });
-    expect(await code(sendRawMessage('raw', 't', fetchFn, fakeAuth()))).toBe('network');
+    expect(await code(sendRawMessage('raw', 't', fetchFn))).toBe('network');
   });
 });

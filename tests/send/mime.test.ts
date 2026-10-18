@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { estimateMimeBytes } from '../../src/send/batch';
 import { buildMimeMessage, encodeFilenameRfc2231 } from '../../src/send/mime';
 
 describe('encodeFilenameRfc2231', () => {
@@ -47,5 +48,29 @@ describe('buildMimeMessage', () => {
     });
     expect(m).toContain('Subject: Hi\r\n');
     expect(m.length).toBeGreaterThan(6_000_000);
+  });
+});
+
+describe('linhas longas', () => {
+  const longName = '📚'.repeat(120) + '.epub';
+  const data = new Uint8Array(1000);
+  test('nome com 120 emoji: toda linha ≤ 998 e continuações decodificam', () => {
+    const m = buildMimeMessage({ from: 'a@g.com', to: 'b@kindle.com', subject: 'x', attachments: [{ filename: longName, data }], boundary: 'B' });
+    for (const l of m.split('\r\n')) expect(l.length).toBeLessThanOrEqual(998);
+    const unfolded = m.replace(/;\r\n /g, ';');
+    const parts = [...unfolded.matchAll(/Content-Disposition: attachment; (.*)\r\n/g)][0]![1]!;
+    const enc = parts.split(';').map((p) => p.replace(/^filename\*\d+\*=(UTF-8'')?/, '')).join('');
+    expect(decodeURIComponent(enc)).toBe(longName);
+    expect(estimateMimeBytes(data.length)).toBeGreaterThanOrEqual(m.length);
+  });
+  test('assunto longo: encoded-words ≤ 75 e decodificam ao original', () => {
+    const subj = 'Ação 📚 café '.repeat(20);
+    const m = buildMimeMessage({ from: 'a@g.com', to: 'b@kindle.com', subject: subj, attachments: [], boundary: 'B' });
+    const hdr = m.split('\r\nMIME-Version')[0]!.split('Subject: ')[1]!;
+    const words = hdr.split('\r\n ');
+    expect(words.length).toBeGreaterThan(1);
+    for (const w of words) expect(w.length).toBeLessThanOrEqual(75);
+    const dec = words.map((w) => Buffer.from(w.slice(10, -2), 'base64')).reduce((a, b) => Buffer.concat([a, b]));
+    expect(dec.toString('utf8')).toBe(subj);
   });
 });
