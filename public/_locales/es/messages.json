@@ -31,5 +31,68 @@
   },
   "error_extract_failed": {
     "message": "No se pudo extraer el contenido de esta página."
+  },
+  "settings": {
+    "message": "Ajustes"
+  },
+  "back": {
+    "message": "Volver"
+  },
+  "kindleAddressLabel": {
+    "message": "Dirección de Kindle"
+  },
+  "kindleAddressPlaceholder": {
+    "message": "nombre@kindle.com"
+  },
+  "save": {
+    "message": "Guardar"
+  },
+  "saved": {
+    "message": "Guardado"
+  },
+  "googleAccount": {
+    "message": "Cuenta de Google"
+  },
+  "connectGoogle": {
+    "message": "Conectar cuenta de Google"
+  },
+  "connectedAs": {
+    "message": "Conectado como $1"
+  },
+  "disconnect": {
+    "message": "Desconectar"
+  },
+  "amazonReminder": {
+    "message": "En tu cuenta de Amazon, añade la dirección de Gmail de arriba a la \"Approved Personal Document E-mail List\" (Contenido y dispositivos > Preferencias > Configuración de documentos personales). Si no, Amazon descartará los documentos."
+  },
+  "clientIdMissing": {
+    "message": "Client ID de Google no configurado. Sigue docs/setup-google-oauth.md y vuelve a compilar la extensión."
+  },
+  "titleLabel": {
+    "message": "Título"
+  },
+  "authorLabel": {
+    "message": "Autor"
+  },
+  "downloadEpub": {
+    "message": "Descargar EPUB"
+  },
+  "sendToKindle": {
+    "message": "Enviar a Kindle"
+  },
+  "extracting": {
+    "message": "Extrayendo la página…"
+  },
+  "sending": {
+    "message": "Enviando…"
+  },
+  "sentTo": {
+    "message": "Enviado a $1"
+  },
+  "previewLabel": {
+    "message": "Vista previa"
+  },
+  "retryExtract": {
+    "message": "Reintentar"
   }
 }
