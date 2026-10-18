@@ -1,0 +1,4 @@
+.curator/memory/.touched*
+.claude/agents/
+.superpowers/
+.worktrees/

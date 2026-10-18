@@ -1,0 +1,16 @@
+format_version = 1
+
+# Overrides por projeto. Só [roles] e [defaults] são lidos aqui.
+
+# [roles]
+# code-writer = { tier = "standard" }                  # tier: strong | standard | cheap
+# reviewer = { tier = "standard", final = "strong" }   # final = tier da revisão final
+
+# [defaults]
+# pack_budget_tokens = 12000        # orçamento de tokens do context pack
+# pack_skills = 3                   # skills casadas listadas no pack (0 = desligado)
+# max_fix_rounds = 3                # rounds de correção antes de bloquear a task
+# max_parallel = 5                  # tasks que podem estar in-progress ao mesmo tempo
+# pre_read_mode = "advisory"        # advisory | strict | off
+# pre_edit_mode = "advisory"        # edição fora do scope das tasks em andamento: advisory | strict | off
+# skill_stale_after_days = 90       # dias até uma skill ser considerada velha
