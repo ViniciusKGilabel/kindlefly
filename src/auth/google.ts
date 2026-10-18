@@ -7,6 +7,8 @@ const AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
 const REVOKE_ENDPOINT = 'https://oauth2.googleapis.com/revoke';
 /** Tokens que expiram em menos que isto são tratados como expirados. */
 const REFRESH_MARGIN_MS = 60_000;
+/** Tempo máximo da renovação silenciosa (prompt=none passa por redirecionamentos intermediários). */
+export const SILENT_TIMEOUT_MS = 10_000;
 
 export function buildAuthUrl(o: {
   clientId: string;
@@ -49,7 +51,14 @@ export function parseAuthRedirect(
 ): { accessToken: string; expiresAt: number; email: string } {
   const hashIdx = redirectUrl.indexOf('#');
   const params = new URLSearchParams(hashIdx >= 0 ? redirectUrl.slice(hashIdx + 1) : '');
-  const error = params.get('error');
+  let error = params.get('error');
+  if (!error) {
+    try {
+      error = new URL(redirectUrl).searchParams.get('error');
+    } catch {
+      // URL inválida: segue sem erro de query.
+    }
+  }
   if (error) {
     throw new KfError(error === 'access_denied' ? 'auth_cancelled' : 'auth_failed', error);
   }
@@ -68,7 +77,12 @@ export function parseAuthRedirect(
 }
 
 export interface IdentityLike {
-  launchWebAuthFlow(o: { url: string; interactive: boolean }): Promise<string | undefined>;
+  launchWebAuthFlow(o: {
+    url: string;
+    interactive: boolean;
+    abortOnLoadForNonInteractive?: boolean;
+    timeoutMsForNonInteractive?: number;
+  }): Promise<string | undefined>;
   getRedirectURL(): string;
 }
 
@@ -103,7 +117,16 @@ export class GoogleAuth {
     });
     let redirectUrl: string | undefined;
     try {
-      redirectUrl = await this.d.identity.launchWebAuthFlow({ url, interactive: mode === 'select' });
+      redirectUrl = await this.d.identity.launchWebAuthFlow(
+        mode === 'select'
+          ? { url, interactive: true }
+          : {
+              url,
+              interactive: false,
+              abortOnLoadForNonInteractive: false,
+              timeoutMsForNonInteractive: SILENT_TIMEOUT_MS,
+            },
+      );
     } catch (e) {
       throw new KfError('auth_cancelled', e instanceof Error ? e.message : undefined);
     }
@@ -128,12 +151,12 @@ export class GoogleAuth {
     const t = await this.d.storage.getToken();
     if (t && t.expiresAt - this.d.now() >= REFRESH_MARGIN_MS) return t.accessToken;
 
+    if (!this.d.clientId) throw new KfError('auth_failed', 'client id not configured');
     let r;
     try {
       r = await this.attempt('silent', email);
-    } catch (e) {
-      // Sem client id não há o que tentar; qualquer outra falha cai para UMA tentativa interativa.
-      if (e instanceof KfError && e.message.includes('client id not configured')) throw e;
+    } catch {
+      // Qualquer falha da silenciosa cai para UMA tentativa interativa.
       r = await this.attempt('select', email);
     }
     await this.store(r);

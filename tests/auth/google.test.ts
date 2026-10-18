@@ -101,6 +101,9 @@ describe('parseAuthRedirect', () => {
   test('error=access_denied → auth_cancelled', () => {
     expect(() => parseAuthRedirect(`${REDIRECT}#error=access_denied`, 'n', NOW)).toThrowError(/^auth_cancelled/);
   });
+  test('error na query (?error=access_denied) → auth_cancelled', () => {
+    expect(() => parseAuthRedirect(`${REDIRECT}?error=access_denied`, 'n', NOW)).toThrowError(/^auth_cancelled/);
+  });
   test('outro error → auth_failed', () => {
     expect(() => parseAuthRedirect(`${REDIRECT}#error=login_required`, 'n', NOW)).toThrowError(/^auth_failed/);
   });
@@ -177,6 +180,23 @@ describe('GoogleAuth', () => {
     expect(calls[0]!.interactive).toBe(false);
     expect(calls[0]!.url.searchParams.get('prompt')).toBe('none');
     expect(calls[0]!.url.searchParams.get('login_hint')).toBe('u@g.com');
+  });
+
+  test('opções do launchWebAuthFlow: silenciosa estendida, interativa sem elas', async () => {
+    const opts: Record<string, unknown>[] = [];
+    const identity: IdentityLike = {
+      getRedirectURL: () => REDIRECT,
+      launchWebAuthFlow: async (o) => {
+        opts.push(o as never);
+        if (!o.interactive) throw new Error('x');
+        return redirect({ nonce: new URL(o.url).searchParams.get('nonce')!, email: 'u@g.com' });
+      },
+    };
+    await mk(identity, memStorage({ email: 'u@g.com' })).getToken();
+    const { url: _u1, ...silent } = opts[0]!;
+    const { url: _u2, ...inter } = opts[1]!;
+    expect(silent).toEqual({ interactive: false, abortOnLoadForNonInteractive: false, timeoutMsForNonInteractive: 10_000 });
+    expect(inter).toEqual({ interactive: true });
   });
 
   test('getToken sem token guardado (sessão nova) com e-mail → renova', async () => {
