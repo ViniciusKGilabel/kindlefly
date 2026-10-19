@@ -70,9 +70,15 @@ export default function Home() {
   const [kindle, setKindle] = useState<string | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const saver = useRef(
-    createDebouncedSaver<QueueItem[]>((q) => void saveQueue(q).catch((e) => unexpected(e)), META_SAVE_MS),
-  );
+  const saverRef = useRef<ReturnType<typeof createDebouncedSaver<QueueItem[]>> | null>(null);
+  if (!saverRef.current) {
+    saverRef.current = createDebouncedSaver<QueueItem[]>(
+      (q) => saveQueue(q).catch((e) => void unexpected(e)),
+      META_SAVE_MS,
+    );
+  }
+  const saver = saverRef as { current: NonNullable<typeof saverRef.current> };
+
 
   /** Atualiza estado e ref na hora; grava já, ou com atraso (edição de título/autor). */
   function commit(q: QueueItem[], debounced = false) {
@@ -109,7 +115,17 @@ export default function Home() {
         await addActiveTab();
       }
     })();
-    return () => saver.current.flush();
+    const flushNow = () => void saver.current.flush();
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flushNow();
+    };
+    window.addEventListener('pagehide', flushNow);
+    document.addEventListener('visibilitychange', onHide);
+    return () => {
+      window.removeEventListener('pagehide', flushNow);
+      document.removeEventListener('visibilitychange', onHide);
+      flushNow();
+    };
   }, []);
 
   const selected = selectedItems(queue);
@@ -125,7 +141,7 @@ export default function Home() {
   );
 
   async function onDownload() {
-    saver.current.flush();
+    await saver.current.flush();
     try {
       const files = await itemsToEpubs(selectedItems(queueRef.current));
       for (const [i, f] of files.entries()) {
@@ -138,7 +154,7 @@ export default function Home() {
   }
 
   async function onSend() {
-    saver.current.flush();
+    await saver.current.flush();
     setStatus({ s: 'sending' });
     try {
       const items = selectedItems(queueRef.current);

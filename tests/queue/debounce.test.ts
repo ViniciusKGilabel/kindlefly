@@ -35,3 +35,18 @@ test('flush sem pendente não faz nada; saveNow cancela o pendente', () => {
   vi.advanceTimersByTime(1000);
   expect(save.mock.calls).toEqual([[2]]);
 });
+
+test('flush devolve a promise que resolve só depois do save terminar', async () => {
+  let done = false;
+  const save = vi.fn(async () => {
+    await Promise.resolve();
+    done = true;
+  });
+  const d = createDebouncedSaver<number>(save, 400);
+  d.schedule(1);
+  const p = d.flush();
+  expect(done).toBe(false);
+  await p;
+  expect(done).toBe(true);
+  await expect(d.flush()).resolves.toBeUndefined();
+});
