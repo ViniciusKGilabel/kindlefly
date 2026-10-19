@@ -3,6 +3,8 @@ import { defineConfig } from 'wxt';
 // https://wxt.dev/api/config.html
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
+  // Pasta visível no Finder, para carregar sem compactação em chrome://extensions.
+  outDir: 'output',
   manifest: {
     name: '__MSG_extName__',
     description: '__MSG_extDescription__',
