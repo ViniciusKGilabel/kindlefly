@@ -9,6 +9,7 @@ import { htmlToChapter } from '../../src/extract/to-chapter';
 import {
   addItem, removeItem, selectedItems, setAllSelected, setSelected, updateMeta, type QueueItem,
 } from '../../src/queue/queue';
+import { createDebouncedSaver } from '../../src/queue/debounce';
 import { loadQueue, saveQueue } from '../../src/queue/store';
 import { sendToKindle } from '../../src/send/gmail';
 import { getKindleAddress } from '../../src/settings/store';
@@ -23,6 +24,9 @@ type Status =
   | { s: 'error'; text: string };
 
 const DOWNLOAD_GAP_MS = 300;
+const META_SAVE_MS = 400;
+// A aba ativa é adicionada uma vez por vida do painel (Home remonta ao voltar das Configurações).
+let autoAdded = false;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function download(file: EpubFile) {
@@ -66,12 +70,16 @@ export default function Home() {
   const [kindle, setKindle] = useState<string | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const saver = useRef(
+    createDebouncedSaver<QueueItem[]>((q) => void saveQueue(q).catch((e) => unexpected(e)), META_SAVE_MS),
+  );
 
-  /** Atualiza o estado e persiste (a ref evita ler uma lista velha em callbacks assíncronos). */
-  function commit(q: QueueItem[]) {
+  /** Atualiza estado e ref na hora; grava já, ou com atraso (edição de título/autor). */
+  function commit(q: QueueItem[], debounced = false) {
     queueRef.current = q;
     setQueue(q);
-    void saveQueue(q).catch((e) => unexpected(e));
+    if (debounced) saver.current.schedule(q);
+    else saver.current.saveNow(q);
   }
 
   async function addActiveTab() {
@@ -96,8 +104,12 @@ export default function Home() {
       setReady(true);
       void getKindleAddress().then(setKindle, () => setKindle(null));
       void auth.connectedEmail().then(setAccount, () => setAccount(null));
-      await addActiveTab();
+      if (!autoAdded) {
+        autoAdded = true;
+        await addActiveTab();
+      }
     })();
+    return () => saver.current.flush();
   }, []);
 
   const selected = selectedItems(queue);
@@ -113,6 +125,7 @@ export default function Home() {
   );
 
   async function onDownload() {
+    saver.current.flush();
     try {
       const files = await itemsToEpubs(selectedItems(queueRef.current));
       for (const [i, f] of files.entries()) {
@@ -125,6 +138,7 @@ export default function Home() {
   }
 
   async function onSend() {
+    saver.current.flush();
     setStatus({ s: 'sending' });
     try {
       const items = selectedItems(queueRef.current);
@@ -170,6 +184,7 @@ export default function Home() {
         </p>
       )}
 
+      {ready && (
       <QueueList
         queue={queue}
         focusedId={focusedId}
@@ -185,6 +200,7 @@ export default function Home() {
           setFocusedId(null);
         }}
       />
+      )}
 
       <div className="row">
         <button type="button" onClick={onDownload} disabled={busy || n === 0}>
@@ -202,13 +218,13 @@ export default function Home() {
           <input
             id="title"
             value={focused.title}
-            onChange={(e) => commit(updateMeta(queueRef.current, focused.id, { title: e.target.value }))}
+            onChange={(e) => commit(updateMeta(queueRef.current, focused.id, { title: e.target.value }), true)}
           />
           <label htmlFor="author">{t('authorLabel')}</label>
           <input
             id="author"
             value={focused.author}
-            onChange={(e) => commit(updateMeta(queueRef.current, focused.id, { author: e.target.value }))}
+            onChange={(e) => commit(updateMeta(queueRef.current, focused.id, { author: e.target.value }), true)}
           />
           <h2>{t('previewLabel')}</h2>
           <article className="preview" onClick={onPreviewClick} dangerouslySetInnerHTML={{ __html: previewHtml }} />

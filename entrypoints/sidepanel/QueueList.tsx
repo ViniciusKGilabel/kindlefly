@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { t } from '../../src/core/i18n';
 import type { QueueItem } from '../../src/queue/queue';
 
@@ -12,13 +13,18 @@ interface Props {
 }
 
 export default function QueueList({ queue, focusedId, onFocus, onToggle, onToggleAll, onRemove, onClear }: Props) {
+  const allRef = useRef<HTMLInputElement>(null);
+  const count = queue.filter((i) => i.selected).length;
+  useEffect(() => {
+    if (allRef.current) allRef.current.indeterminate = count > 0 && count < queue.length;
+  }, [count, queue.length]);
   if (queue.length === 0) return <p className="hint">{t('emptyList')}</p>;
   const allSelected = queue.every((i) => i.selected);
   return (
     <div className="queue">
       <div className="queue-head">
         <label className="check">
-          <input type="checkbox" checked={allSelected} onChange={(e) => onToggleAll(e.target.checked)} />
+          <input ref={allRef} type="checkbox" checked={allSelected} onChange={(e) => onToggleAll(e.target.checked)} />
           {t('selectAll')}
         </label>
         <button type="button" onClick={onClear}>
