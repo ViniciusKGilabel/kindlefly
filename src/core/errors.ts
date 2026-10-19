@@ -8,7 +8,8 @@ export type ErrorCode =
   | 'too_large'
   | 'network'
   | 'gmail_error'
-  | 'extract_failed';
+  | 'extract_failed'
+  | 'restricted_page';
 
 export const ALL_ERROR_CODES: readonly ErrorCode[] = [
   'not_connected',
@@ -21,6 +22,7 @@ export const ALL_ERROR_CODES: readonly ErrorCode[] = [
   'network',
   'gmail_error',
   'extract_failed',
+  'restricted_page',
 ];
 
 export class KfError extends Error {

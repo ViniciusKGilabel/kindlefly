@@ -7,7 +7,7 @@ import JSZip from 'jszip';
 import { expect, test } from 'vitest';
 import { sanitizeFilename } from '../../src/core/filename';
 import type { ExtractedItem } from '../../src/core/types';
-import { itemToEpub } from '../../src/panel/pipeline';
+import { itemToEpub, itemsToEpubs } from '../../src/panel/pipeline';
 
 const item: ExtractedItem = {
   id: 'x', sourceUrl: 'https://example.com/post', title: 'Original', author: 'Site', language: 'pt-BR',
@@ -61,3 +61,11 @@ test.skipIf(!hasJava)('arquivo gerado passa no epubcheck', async () => {
   const r = spawnSync('node', ['scripts/epubcheck.mjs', p], { encoding: 'utf8' });
   expect(r.stdout + r.stderr).toContain('No errors or warnings detected');
 }, 120_000);
+
+test('itemsToEpubs: títulos iguais ganham sufixo e usa título editado do item', async () => {
+  const mk = (id: string, title: string) => ({ ...item, id, title, selected: true, addedAt: 1 });
+  const files = await itemsToEpubs([mk('1', 'X'), mk('2', 'X'), mk('3', 'X'), mk('4', 'Editado')]);
+  expect(files.map((f) => f.filename)).toEqual(['X.epub', 'X (2).epub', 'X (3).epub', 'Editado.epub']);
+  const opf = await (await JSZip.loadAsync(files[3]!.data)).file('OEBPS/content.opf')!.async('string');
+  expect(opf).toContain('<dc:title>Editado</dc:title>');
+});

@@ -1,21 +1,29 @@
-import { useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { createGoogleAuth } from '../../src/auth/google';
 import { t } from '../../src/core/i18n';
-import type { EpubFile, ExtractedItem } from '../../src/core/types';
+import type { EpubFile } from '../../src/core/types';
 import { KfError } from '../../src/core/errors';
 import { errorMessage, extractActiveTab } from '../../src/panel/extract-active';
-import { itemToEpub } from '../../src/panel/pipeline';
+import { itemsToEpubs } from '../../src/panel/pipeline';
 import { htmlToChapter } from '../../src/extract/to-chapter';
+import {
+  addItem, removeItem, selectedItems, setAllSelected, setSelected, updateMeta, type QueueItem,
+} from '../../src/queue/queue';
+import { loadQueue, saveQueue } from '../../src/queue/store';
 import { sendToKindle } from '../../src/send/gmail';
 import { getKindleAddress } from '../../src/settings/store';
+import QueueList from './QueueList';
 
-type Item = Omit<ExtractedItem, 'id'>;
 type Status =
+  | { s: 'idle' }
   | { s: 'extracting' }
-  | { s: 'ready' }
   | { s: 'sending' }
-  | { s: 'sent'; to: string }
-  | { s: 'error'; text: string; canRetry?: boolean };
+  | { s: 'sent'; count: number; to: string }
+  | { s: 'info'; text: string }
+  | { s: 'error'; text: string };
+
+const DOWNLOAD_GAP_MS = 300;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function download(file: EpubFile) {
   const blob = new Blob([file.data as BlobPart], { type: 'application/epub+zip' });
@@ -51,61 +59,88 @@ function onPreviewClick(e: MouseEvent<HTMLElement>) {
 
 export default function Home() {
   const auth = useMemo(() => createGoogleAuth(), []);
-  const [item, setItem] = useState<Item | null>(null);
-  const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('');
-  const [status, setStatus] = useState<Status>({ s: 'extracting' });
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const queueRef = useRef<QueueItem[]>([]);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [status, setStatus] = useState<Status>({ s: 'idle' });
+  const [kindle, setKindle] = useState<string | null>(null);
+  const [account, setAccount] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
 
-  async function extract() {
+  /** Atualiza o estado e persiste (a ref evita ler uma lista velha em callbacks assíncronos). */
+  function commit(q: QueueItem[]) {
+    queueRef.current = q;
+    setQueue(q);
+    void saveQueue(q).catch((e) => unexpected(e));
+  }
+
+  async function addActiveTab() {
     setStatus({ s: 'extracting' });
     try {
       const r = await extractActiveTab();
-      setItem(r);
-      setTitle(r.title);
-      setAuthor(r.author);
-      setStatus({ s: 'ready' });
+      const res = addItem(queueRef.current, r, Date.now(), crypto.randomUUID());
+      commit(res.queue);
+      setFocusedId(res.id);
+      setStatus({ s: 'idle' });
     } catch (e) {
-      setItem(null);
-      setStatus({ s: 'error', text: errorMessage(e, t), canRetry: true });
+      if (e instanceof KfError && e.code === 'restricted_page') setStatus({ s: 'info', text: t('restrictedPage') });
+      else setStatus({ s: 'error', text: errorMessage(e, t) });
     }
   }
 
   useEffect(() => {
-    void extract();
+    void (async () => {
+      const saved = await loadQueue();
+      queueRef.current = saved;
+      setQueue(saved);
+      setReady(true);
+      void getKindleAddress().then(setKindle, () => setKindle(null));
+      void auth.connectedEmail().then(setAccount, () => setAccount(null));
+      await addActiveTab();
+    })();
   }, []);
+
+  const selected = selectedItems(queue);
+  const n = selected.length;
+  const focused = queue.find((i) => i.id === focusedId) ?? null;
+  const busy = status.s === 'extracting' || status.s === 'sending';
+  const sendHint = !kindle ? t('hintNeedKindle') : !account ? t('hintNeedAccount') : null;
 
   // Já sanitizado por htmlToChapter (sem scripts, handlers nem iframes): só então vai para o DOM.
   const previewHtml = useMemo(
-    () => (item ? htmlToChapter(item.html, { id: 'c1', title }).xhtmlBody : ''),
-    [item, title],
+    () => (focused ? htmlToChapter(focused.html, { id: 'c1', title: focused.title }).xhtmlBody : ''),
+    [focused?.id, focused?.html, focused?.title],
   );
 
-  const full = item ? { ...item, id: 'current' } : null;
-  const busy = status.s === 'extracting' || status.s === 'sending';
-
   async function onDownload() {
-    if (!full) return;
     try {
-      download(await itemToEpub(full, { title, author }));
+      const files = await itemsToEpubs(selectedItems(queueRef.current));
+      for (const [i, f] of files.entries()) {
+        if (i > 0) await sleep(DOWNLOAD_GAP_MS);
+        download(f);
+      }
     } catch (e) {
       setStatus({ s: 'error', text: e instanceof KfError ? errorMessage(e, t) : unexpected(e) });
     }
   }
 
   async function onSend() {
-    if (!full) return;
     setStatus({ s: 'sending' });
     try {
-      const file = await itemToEpub(full, { title, author });
+      const items = selectedItems(queueRef.current);
+      const files = await itemsToEpubs(items);
       const kindleAddress = await getKindleAddress();
-      const r = await sendToKindle([file], {
+      const r = await sendToKindle(files, {
         auth,
         kindleAddress,
         fetchFn: (...a) => fetch(...a),
-        subject: title,
+        subject: items.length === 1 ? items[0]!.title : 'kindlefly',
       });
-      if (r.tooLarge.length > 0) setStatus({ s: 'error', text: t('error_too_large') });
-      else setStatus({ s: 'sent', to: kindleAddress ?? '' });
+      if (r.tooLarge.length > 0) {
+        setStatus({ s: 'error', text: `${t('error_too_large')} ${r.tooLarge.join(', ')}` });
+      } else {
+        setStatus({ s: 'sent', count: files.length, to: kindleAddress ?? '' });
+      }
     } catch (e) {
       setStatus({ s: 'error', text: errorMessage(e, t) });
     }
@@ -113,44 +148,68 @@ export default function Home() {
 
   return (
     <section className="screen">
+      <button type="button" className="primary" onClick={addActiveTab} disabled={busy || !ready}>
+        {t('addToList')}
+      </button>
+
       {status.s === 'extracting' && <p role="status">{t('extracting')}</p>}
       {status.s === 'sending' && <p role="status">{t('sending')}</p>}
       {status.s === 'sent' && (
         <p className="ok" role="status">
-          {t('sentTo', [status.to])}
+          {t('sentCount', [String(status.count), status.to])}
+        </p>
+      )}
+      {status.s === 'info' && (
+        <p className="hint" role="status">
+          {status.text}
         </p>
       )}
       {status.s === 'error' && (
         <p className="error" role="alert">
           {status.text}
-          {status.canRetry && (
-            <>
-              {' '}
-              <button type="button" onClick={extract}>
-                {t('retryExtract')}
-              </button>
-            </>
-          )}
         </p>
       )}
 
-      {item && (
+      <QueueList
+        queue={queue}
+        focusedId={focusedId}
+        onFocus={setFocusedId}
+        onToggle={(id, sel) => commit(setSelected(queueRef.current, id, sel))}
+        onToggleAll={(sel) => commit(setAllSelected(queueRef.current, sel))}
+        onRemove={(id) => {
+          commit(removeItem(queueRef.current, id));
+          if (id === focusedId) setFocusedId(null);
+        }}
+        onClear={() => {
+          commit([]);
+          setFocusedId(null);
+        }}
+      />
+
+      <div className="row">
+        <button type="button" onClick={onDownload} disabled={busy || n === 0}>
+          {t('downloadSelected', [String(n)])}
+        </button>
+        <button type="button" className="primary" onClick={onSend} disabled={busy || n === 0 || sendHint !== null}>
+          {t('sendSelected', [String(n)])}
+        </button>
+      </div>
+      {sendHint && <p className="hint">{sendHint}</p>}
+
+      {focused && (
         <>
           <label htmlFor="title">{t('titleLabel')}</label>
-          <input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <input
+            id="title"
+            value={focused.title}
+            onChange={(e) => commit(updateMeta(queueRef.current, focused.id, { title: e.target.value }))}
+          />
           <label htmlFor="author">{t('authorLabel')}</label>
-          <input id="author" value={author} onChange={(e) => setAuthor(e.target.value)} />
-          <div className="row">
-            <button type="button" onClick={onDownload} disabled={busy}>
-              {t('downloadEpub')}
-            </button>
-            <button type="button" className="primary" onClick={onSend} disabled={busy}>
-              {t('sendToKindle')}
-            </button>
-          </div>
-          <button type="button" onClick={extract} disabled={busy}>
-            {t('extractThisTab')}
-          </button>
+          <input
+            id="author"
+            value={focused.author}
+            onChange={(e) => commit(updateMeta(queueRef.current, focused.id, { author: e.target.value }))}
+          />
           <h2>{t('previewLabel')}</h2>
           <article className="preview" onClick={onPreviewClick} dangerouslySetInnerHTML={{ __html: previewHtml }} />
         </>

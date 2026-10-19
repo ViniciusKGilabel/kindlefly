@@ -13,4 +13,8 @@ describe('manifest', () => {
   test('declara ícones 16/32/48/128', () => {
     expect(Object.keys(manifest.icons).sort()).toEqual(['128', '16', '32', '48']);
   });
+
+  test('declara unlimitedStorage (a lista persiste conteúdo das páginas)', () => {
+    expect(manifest.permissions).toContain('unlimitedStorage');
+  });
 });

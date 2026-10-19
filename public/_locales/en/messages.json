@@ -86,9 +86,6 @@
   "sending": {
     "message": "Sending…"
   },
-  "sentTo": {
-    "message": "Sent to $1"
-  },
   "previewLabel": {
     "message": "Preview"
   },
@@ -101,7 +98,43 @@
   "error_unexpected": {
     "message": "An unexpected error occurred."
   },
-  "extractThisTab": {
-    "message": "Extract this tab"
+  "addToList": {
+    "message": "Add to list"
+  },
+  "selectAll": {
+    "message": "Select all"
+  },
+  "clearList": {
+    "message": "Clear list"
+  },
+  "remove": {
+    "message": "Remove from list"
+  },
+  "emptyList": {
+    "message": "No pages in the list. Open an article and click \"Add to list\"."
+  },
+  "downloadSelected": {
+    "message": "Download selected ($1)"
+  },
+  "sendSelected": {
+    "message": "Send selected ($1)"
+  },
+  "hintNeedKindle": {
+    "message": "Save your Kindle address in Settings to send."
+  },
+  "hintNeedAccount": {
+    "message": "Connect your Google account in Settings to send."
+  },
+  "sentCount": {
+    "message": "$1 file(s) sent to $2"
+  },
+  "restrictedPage": {
+    "message": "This page can't be extracted (browser or store internal page)."
+  },
+  "error_restricted_page": {
+    "message": "This page can't be extracted (browser or store internal page)."
+  },
+  "selectItem": {
+    "message": "Select $1"
   }
 }

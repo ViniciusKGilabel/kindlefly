@@ -86,9 +86,6 @@
   "sending": {
     "message": "Enviando…"
   },
-  "sentTo": {
-    "message": "Enviado para $1"
-  },
   "previewLabel": {
     "message": "Prévia"
   },
@@ -101,7 +98,43 @@
   "error_unexpected": {
     "message": "Ocorreu um erro inesperado."
   },
-  "extractThisTab": {
-    "message": "Extrair esta aba"
+  "addToList": {
+    "message": "Adicionar à lista"
+  },
+  "selectAll": {
+    "message": "Selecionar todos"
+  },
+  "clearList": {
+    "message": "Limpar lista"
+  },
+  "remove": {
+    "message": "Remover da lista"
+  },
+  "emptyList": {
+    "message": "Nenhuma página na lista. Abra um artigo e clique em \"Adicionar à lista\"."
+  },
+  "downloadSelected": {
+    "message": "Baixar selecionados ($1)"
+  },
+  "sendSelected": {
+    "message": "Enviar selecionados ($1)"
+  },
+  "hintNeedKindle": {
+    "message": "Salve seu endereço Kindle em Configurações para enviar."
+  },
+  "hintNeedAccount": {
+    "message": "Conecte sua conta Google em Configurações para enviar."
+  },
+  "sentCount": {
+    "message": "$1 arquivo(s) enviado(s) para $2"
+  },
+  "restrictedPage": {
+    "message": "Esta página não pode ser extraída (página interna do navegador ou da loja)."
+  },
+  "error_restricted_page": {
+    "message": "Esta página não pode ser extraída (página interna do navegador ou da loja)."
+  },
+  "selectItem": {
+    "message": "Selecionar $1"
   }
 }
