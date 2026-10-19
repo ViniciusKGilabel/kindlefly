@@ -3,7 +3,6 @@
 ## Agora
 
 - [ ] dono: reenviar após >1 h sem novo login (critério 10)
-- [ ] T-0007 lista de páginas com seleção (baixar/enviar vários)
 
 ## Próximo
 
@@ -13,6 +12,7 @@
 
 ## Concluído
 
+- [x] 2026-10-19 T-0007 lista persistente com seleção, baixar/enviar vários (146 testes; testado em Chromium)
 - [x] 2026-10-19 checkpoint: login Google e envio para o Kindle funcionaram com a conta do dono
 
 - [x] 2026-10-18 spec v1 (.curator/SPEC.md) e plano 1 (docs/superpowers/plans/2026-10-18-kindlefly-p1-envio-gmail.md)
