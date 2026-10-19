@@ -39,7 +39,7 @@ cp .env.example .env.local
 # edite .env.local e cole: WXT_GOOGLE_CLIENT_ID=<seu client id>
 pnpm wxt build   # ou pnpm dev
 ```
-Carregue `.output/chrome-mv3` em `chrome://extensions` (modo desenvolvedor > Carregar sem compactação). Sem o client ID, as Configurações mostram um aviso apontando para este guia.
+Carregue a pasta `output/chrome-mv3` em `chrome://extensions` (modo desenvolvedor > Carregar sem compactação). Sem o client ID, as Configurações mostram um aviso apontando para este guia.
 
 ## 6. Amazon
 1. Em Amazon > **Conteúdo e dispositivos > Preferências > Configurações de documentos pessoais**:

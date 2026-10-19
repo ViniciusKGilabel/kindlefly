@@ -2,7 +2,8 @@
 
 ## Agora
 
-- [ ] dono: checkpoint humano do Plano 1 — seguir docs/setup-google-oauth.md, conectar conta Google, enviar artigo ao Kindle, reenviar após >1 h (critérios 1, 2 sem imagens, 10)
+- [ ] dono: reenviar após >1 h sem novo login (critério 10)
+- [ ] T-0007 lista de páginas com seleção (baixar/enviar vários)
 
 ## Próximo
 
@@ -11,6 +12,8 @@
 - [ ] Plano 4 — acabamento, traduções completas, Playwright, auditoria de rede
 
 ## Concluído
+
+- [x] 2026-10-19 checkpoint: login Google e envio para o Kindle funcionaram com a conta do dono
 
 - [x] 2026-10-18 spec v1 (.curator/SPEC.md) e plano 1 (docs/superpowers/plans/2026-10-18-kindlefly-p1-envio-gmail.md)
 - [x] 2026-10-18 Plano 1, tasks T-0001..T-0006 (branch feat/p1-envio-gmail): 104 testes, tsc limpo, build ok, revisão final da branch com correções aplicadas
