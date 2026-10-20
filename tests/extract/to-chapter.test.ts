@@ -85,3 +85,8 @@ test('data:, javascript: e relativas são descartadas', () => {
 test('sem imagens: imageUrls vazio', () => {
   expect(htmlToChapter('<p>x</p>', opts).imageUrls ?? []).toEqual([]);
 });
+
+test('img mantém só src e alt (title some)', () => {
+  const ch = htmlToChapter('<img src="https://x.test/a.jpg" alt="a" title="t">', opts);
+  expect(ch.xhtmlBody).not.toContain('title=');
+});

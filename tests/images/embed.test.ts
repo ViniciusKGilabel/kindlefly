@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, test } from 'vitest';
 import { KfError } from '../../src/core/errors';
 import type { Chapter } from '../../src/core/types';
@@ -69,4 +70,11 @@ describe('embedImages', () => {
     const e = Object.assign(new Error('x'), { name: 'AbortError' });
     await expect(embedImages([ch('c1', '<img src="kf-img:0"/>', ['https://x/a.jpg'])], { ...base, fetchImage: async () => { throw e; } })).rejects.toBe(e);
   });
+});
+
+test('alt com quebra de linha e & sai válido e escapado uma vez', async () => {
+  const doc = new DOMParser().parseFromString('<p><img src="kf-img:0" alt="a &amp; b\nc"></p>', 'text/html');
+  const body = new XMLSerializer().serializeToString(doc.body.firstChild!);
+  const r = await embedImages([ch('c1', body, ['https://x/a.jpg'])], base);
+  expect(r.chapters[0]!.xhtmlBody).toContain('alt="a &amp; b c"');
 });

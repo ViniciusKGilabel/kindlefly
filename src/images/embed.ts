@@ -19,15 +19,10 @@ function isAbort(e: unknown): boolean {
   return (e as { name?: string } | null)?.name === 'AbortError';
 }
 
-function escapeAttr(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-/** alt já vem escapado do XMLSerializer; relê e reescapa de forma idempotente. */
+/** O valor de alt vem escapado do XMLSerializer: passa direto (só normaliza espaços/quebras). */
 function altOf(tag: string): string {
-  const m = /\balt=(?:"([^"]*)"|'([^']*)')/.exec(tag);
-  const raw = m?.[1] ?? m?.[2] ?? '';
-  return escapeAttr(raw.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+  const m = /\salt="([^"]*)"/.exec(tag);
+  return (m?.[1] ?? '').replace(/\s+/g, ' ').trim();
 }
 
 /**

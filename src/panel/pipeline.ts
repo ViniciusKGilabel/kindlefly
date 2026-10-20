@@ -27,6 +27,15 @@ function chapterName(n: number): string {
 }
 
 /** Monta um livro de 1 capítulo a partir do item extraído (com título/autor editados) e gera o EPUB. */
+async function resolveGrayscale(img: ImageOptions): Promise<boolean> {
+  if (img.grayscale !== undefined) return img.grayscale;
+  try {
+    return await getGrayscale();
+  } catch {
+    return true; // sem storage (testes): padrão do produto
+  }
+}
+
 async function buildItem(
   item: ExtractedItem & { parts?: QueueItem['parts'] },
   edits: { title: string; author: string },
@@ -42,7 +51,7 @@ async function buildItem(
   if (chapters.some((c) => (c.imageUrls?.length ?? 0) > 0)) {
     const r = await embedImages(chapters, {
       fetchFn: img.fetchFn ?? ((...a) => fetch(...a)),
-      grayscale: img.grayscale ?? (await getGrayscale()),
+      grayscale: await resolveGrayscale(img),
       signal: img.signal,
       onProgress: img.onProgress,
       ...img.embed,
@@ -83,14 +92,7 @@ export async function itemsToEpubs(
   let failedImages = 0;
   let doneBefore = 0;
   let totalBefore = 0;
-  let grayscale = img.grayscale;
-  if (grayscale === undefined) {
-    try {
-      grayscale = await getGrayscale();
-    } catch {
-      grayscale = true; // sem storage (testes): padrão do produto
-    }
-  }
+  const grayscale = await resolveGrayscale(img);
   for (const item of items) {
     let last = { done: 0, total: 0 };
     const { file: f, failed } = await buildItem(item, { title: item.title, author: item.author }, {

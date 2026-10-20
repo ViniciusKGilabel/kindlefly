@@ -37,3 +37,23 @@ describe('resolveLazyImages', () => {
     expect(doc.querySelector('img')!.getAttribute('src')).toBe('https://site.example/b.webp');
   });
 });
+
+describe('data: e srcset', () => {
+  test('src data: é tratado como vazio (data-src vence; srcset vence)', () => {
+    expect(run('<img src="data:image/gif;base64,AAA" srcset="a.jpg 1x, b.jpg 2x">').getAttribute('src')).toBe('https://site.example/a/b/b.jpg');
+  });
+  test('picture source vence src data:', () => {
+    const doc = new DOMParser().parseFromString('<body><picture><source srcset="z.webp 500w"><img src="data:image/gif;base64,AAA"></picture></body>', 'text/html');
+    resolveLazyImages(doc, 'https://site.example/');
+    expect(doc.querySelector('img')!.getAttribute('src')).toBe('https://site.example/z.webp');
+  });
+  test('candidatos data: ignorados; data-srcset vence srcset só-data', () => {
+    const img = run('<img srcset="data:image/gif;base64,AAA 1x" data-srcset="r.jpg 300w, q.jpg 100w">');
+    expect(img.getAttribute('src')).toBe('https://site.example/a/b/r.jpg');
+  });
+  test('vírgula sem espaço separa; vírgula dentro da URL não', () => {
+    expect(run('<img srcset="a.jpg 1x,b.jpg 2x">').getAttribute('src')).toBe('https://site.example/a/b/b.jpg');
+    expect(run('<img srcset="https://c.test/w_100,h_50/a.jpg 100w, https://c.test/w_900,h_50/a.jpg 900w">').getAttribute('src'))
+      .toBe('https://c.test/w_900,h_50/a.jpg');
+  });
+});

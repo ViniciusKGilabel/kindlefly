@@ -35,7 +35,9 @@ export function htmlToChapter(html: string, opts: { id: string; title: string })
     for (const attr of Array.from(el.attributes)) {
       const name = attr.name.toLowerCase();
       const allowed = KEEP_ATTRS.get(name);
-      if (allowed === undefined || (allowed && !allowed.includes(el.localName))) {
+      if (el.localName === 'img' && name !== 'src' && name !== 'alt') {
+        el.removeAttribute(attr.name);
+      } else if (allowed === undefined || (allowed && !allowed.includes(el.localName))) {
         el.removeAttribute(attr.name);
       } else if (name === 'href' && !/^\s*(https?:|#)/i.test(attr.value)) {
         el.removeAttribute(attr.name);
