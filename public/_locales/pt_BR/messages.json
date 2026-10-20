@@ -1,0 +1,209 @@
+{
+  "extName": {
+    "message": "kindlefly"
+  },
+  "extDescription": {
+    "message": "Transforme páginas da web em EPUB e envie para o seu Kindle pelo Gmail."
+  },
+  "error_not_connected": {
+    "message": "Não conectado ao Google. Conecte sua conta primeiro."
+  },
+  "error_auth_cancelled": {
+    "message": "O login foi cancelado. Você pode tentar de novo."
+  },
+  "error_auth_failed": {
+    "message": "Falha no login do Google. Tente novamente."
+  },
+  "error_kindle_address_missing": {
+    "message": "Defina o endereço do seu Kindle nas configurações."
+  },
+  "error_kindle_address_invalid": {
+    "message": "O endereço do Kindle deve terminar em @kindle.com."
+  },
+  "error_too_large": {
+    "message": "O conteúdo é grande demais para enviar por e-mail."
+  },
+  "error_network": {
+    "message": "Erro de rede. Verifique sua conexão e tente novamente."
+  },
+  "error_gmail_error": {
+    "message": "O Gmail não conseguiu enviar a mensagem."
+  },
+  "error_extract_failed": {
+    "message": "Não foi possível extrair o conteúdo desta página."
+  },
+  "error_image_failed": {
+    "message": "Não foi possível baixar ou converter uma imagem."
+  },
+  "settings": {
+    "message": "Configurações"
+  },
+  "back": {
+    "message": "Voltar"
+  },
+  "grayscaleImages": {
+    "message": "Imagens em tons de cinza"
+  },
+  "kindleAddressLabel": {
+    "message": "Endereço do Kindle"
+  },
+  "kindleAddressPlaceholder": {
+    "message": "nome@kindle.com"
+  },
+  "save": {
+    "message": "Salvar"
+  },
+  "saved": {
+    "message": "Salvo"
+  },
+  "googleAccount": {
+    "message": "Conta Google"
+  },
+  "connectGoogle": {
+    "message": "Conectar conta Google"
+  },
+  "connectedAs": {
+    "message": "Conectado como $1"
+  },
+  "disconnect": {
+    "message": "Desconectar"
+  },
+  "amazonReminder": {
+    "message": "Na sua conta da Amazon, adicione o endereço do Gmail acima à \"Approved Personal Document E-mail List\" (Conteúdo e dispositivos > Preferências > Configurações de documentos pessoais). Sem isso, a Amazon descarta os documentos."
+  },
+  "clientIdMissing": {
+    "message": "Client ID do Google não configurado. Siga docs/setup-google-oauth.md e recompile a extensão."
+  },
+  "titleLabel": {
+    "message": "Título"
+  },
+  "authorLabel": {
+    "message": "Autor"
+  },
+  "downloadEpub": {
+    "message": "Baixar EPUB"
+  },
+  "sendToKindle": {
+    "message": "Enviar para o Kindle"
+  },
+  "extracting": {
+    "message": "Extraindo a página…"
+  },
+  "sending": {
+    "message": "Enviando…"
+  },
+  "previewLabel": {
+    "message": "Prévia"
+  },
+  "retryExtract": {
+    "message": "Tentar de novo"
+  },
+  "error_scope_missing": {
+    "message": "A permissão de envio de e-mail não foi concedida. Conecte a conta de novo e marque a permissão do Gmail para enviar e-mails."
+  },
+  "error_unexpected": {
+    "message": "Ocorreu um erro inesperado."
+  },
+  "addToList": {
+    "message": "Adicionar à lista"
+  },
+  "selectAll": {
+    "message": "Selecionar todos"
+  },
+  "clearList": {
+    "message": "Limpar lista"
+  },
+  "remove": {
+    "message": "Remover da lista"
+  },
+  "emptyList": {
+    "message": "Nenhuma página na lista. Abra um artigo e clique em \"Adicionar à lista\"."
+  },
+  "downloadSelected": {
+    "message": "Baixar selecionados ($1)"
+  },
+  "sendSelected": {
+    "message": "Enviar selecionados ($1)"
+  },
+  "hintNeedKindle": {
+    "message": "Salve seu endereço Kindle em Configurações para enviar."
+  },
+  "hintNeedAccount": {
+    "message": "Conecte sua conta Google em Configurações para enviar."
+  },
+  "sentCount": {
+    "message": "$1 arquivo(s) enviado(s) para $2"
+  },
+  "restrictedPage": {
+    "message": "Esta página não pode ser extraída (página interna do navegador ou da loja)."
+  },
+  "error_restricted_page": {
+    "message": "Esta página não pode ser extraída (página interna do navegador ou da loja)."
+  },
+  "selectItem": {
+    "message": "Selecionar $1"
+  },
+  "rangeLabel": {
+    "message": "Capítulos"
+  },
+  "rangeFrom": {
+    "message": "de"
+  },
+  "rangeTo": {
+    "message": "até"
+  },
+  "rangeAdd": {
+    "message": "Adicionar capítulos"
+  },
+  "rangeCancel": {
+    "message": "Cancelar"
+  },
+  "rangeFetching": {
+    "message": "Buscando $1 de $2…"
+  },
+  "rangeInvalid": {
+    "message": "Informe números inteiros, com \"de\" menor ou igual a \"até\"."
+  },
+  "rangeTooMany": {
+    "message": "No máximo $1 capítulos por vez."
+  },
+  "rangeSummaryOk": {
+    "message": "$1 adicionados, $2 já estavam na lista."
+  },
+  "rangeSummaryFailed": {
+    "message": "$1 adicionados, $2 já estavam na lista, $3 não encontrados ($4)."
+  },
+  "rangeCancelled": {
+    "message": "Cancelado."
+  },
+  "mergeSelected": {
+    "message": "Juntar selecionados"
+  },
+  "sendingProgress": {
+    "message": "Enviando e-mail $1 de $2…"
+  },
+  "chapterN": {
+    "message": "Capítulo $1"
+  },
+  "imagesProgress": {
+    "message": "Baixando imagens $1 de $2…"
+  },
+  "imagesFailed": {
+    "message": "$1 imagem(ns) não puderam ser incluídas"
+  },
+  "comicPages": {
+    "message": "$1 páginas"
+  },
+  "sentSomeTooLarge": {
+    "message": "$1 arquivo(s) enviado(s) para $2; $3 grande(s) demais para e-mail"
+  },
+  "downloadTooLarge": {
+    "message": "Baixar os que não couberam"
+  },
+  "sentBeforeError": {
+    "message": "$1 arquivo(s) já tinham sido enviados antes do erro."
+  },
+  "itemsFailed": {
+    "message": "Não foi possível gerar (nenhuma página): $1"
+  }
+}

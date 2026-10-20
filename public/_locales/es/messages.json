@@ -1,0 +1,209 @@
+{
+  "extName": {
+    "message": "kindlefly"
+  },
+  "extDescription": {
+    "message": "Convierte páginas web en EPUB y envíalas a tu Kindle mediante Gmail."
+  },
+  "error_not_connected": {
+    "message": "No conectado a Google. Conecta tu cuenta primero."
+  },
+  "error_auth_cancelled": {
+    "message": "Se canceló el inicio de sesión. Puedes intentarlo de nuevo."
+  },
+  "error_auth_failed": {
+    "message": "Falló el inicio de sesión de Google. Inténtalo de nuevo."
+  },
+  "error_kindle_address_missing": {
+    "message": "Define primero la dirección de tu Kindle en los ajustes."
+  },
+  "error_kindle_address_invalid": {
+    "message": "La dirección de Kindle debe terminar en @kindle.com."
+  },
+  "error_too_large": {
+    "message": "El contenido es demasiado grande para enviarlo por correo."
+  },
+  "error_network": {
+    "message": "Error de red. Revisa tu conexión e inténtalo de nuevo."
+  },
+  "error_gmail_error": {
+    "message": "Gmail no pudo enviar el mensaje."
+  },
+  "error_extract_failed": {
+    "message": "No se pudo extraer el contenido de esta página."
+  },
+  "error_image_failed": {
+    "message": "No se pudo descargar o convertir una imagen."
+  },
+  "settings": {
+    "message": "Ajustes"
+  },
+  "back": {
+    "message": "Volver"
+  },
+  "grayscaleImages": {
+    "message": "Imágenes en escala de grises"
+  },
+  "kindleAddressLabel": {
+    "message": "Dirección de Kindle"
+  },
+  "kindleAddressPlaceholder": {
+    "message": "nombre@kindle.com"
+  },
+  "save": {
+    "message": "Guardar"
+  },
+  "saved": {
+    "message": "Guardado"
+  },
+  "googleAccount": {
+    "message": "Cuenta de Google"
+  },
+  "connectGoogle": {
+    "message": "Conectar cuenta de Google"
+  },
+  "connectedAs": {
+    "message": "Conectado como $1"
+  },
+  "disconnect": {
+    "message": "Desconectar"
+  },
+  "amazonReminder": {
+    "message": "En tu cuenta de Amazon, añade la dirección de Gmail de arriba a la \"Approved Personal Document E-mail List\" (Contenido y dispositivos > Preferencias > Configuración de documentos personales). Si no, Amazon descartará los documentos."
+  },
+  "clientIdMissing": {
+    "message": "Client ID de Google no configurado. Sigue docs/setup-google-oauth.md y vuelve a compilar la extensión."
+  },
+  "titleLabel": {
+    "message": "Título"
+  },
+  "authorLabel": {
+    "message": "Autor"
+  },
+  "downloadEpub": {
+    "message": "Descargar EPUB"
+  },
+  "sendToKindle": {
+    "message": "Enviar a Kindle"
+  },
+  "extracting": {
+    "message": "Extrayendo la página…"
+  },
+  "sending": {
+    "message": "Enviando…"
+  },
+  "previewLabel": {
+    "message": "Vista previa"
+  },
+  "retryExtract": {
+    "message": "Reintentar"
+  },
+  "error_scope_missing": {
+    "message": "No se concedió el permiso de envío de correo. Vuelve a conectar la cuenta y marca el permiso de Gmail para enviar correos."
+  },
+  "error_unexpected": {
+    "message": "Ocurrió un error inesperado."
+  },
+  "addToList": {
+    "message": "Añadir a la lista"
+  },
+  "selectAll": {
+    "message": "Seleccionar todo"
+  },
+  "clearList": {
+    "message": "Vaciar lista"
+  },
+  "remove": {
+    "message": "Quitar de la lista"
+  },
+  "emptyList": {
+    "message": "No hay páginas en la lista. Abre un artículo y pulsa \"Añadir a la lista\"."
+  },
+  "downloadSelected": {
+    "message": "Descargar seleccionados ($1)"
+  },
+  "sendSelected": {
+    "message": "Enviar seleccionados ($1)"
+  },
+  "hintNeedKindle": {
+    "message": "Guarda tu dirección Kindle en Ajustes para enviar."
+  },
+  "hintNeedAccount": {
+    "message": "Conecta tu cuenta de Google en Ajustes para enviar."
+  },
+  "sentCount": {
+    "message": "$1 archivo(s) enviado(s) a $2"
+  },
+  "restrictedPage": {
+    "message": "Esta página no se puede extraer (página interna del navegador o de la tienda)."
+  },
+  "error_restricted_page": {
+    "message": "Esta página no se puede extraer (página interna del navegador o de la tienda)."
+  },
+  "selectItem": {
+    "message": "Seleccionar $1"
+  },
+  "rangeLabel": {
+    "message": "Capítulos"
+  },
+  "rangeFrom": {
+    "message": "de"
+  },
+  "rangeTo": {
+    "message": "hasta"
+  },
+  "rangeAdd": {
+    "message": "Añadir capítulos"
+  },
+  "rangeCancel": {
+    "message": "Cancelar"
+  },
+  "rangeFetching": {
+    "message": "Obteniendo $1 de $2…"
+  },
+  "rangeInvalid": {
+    "message": "Introduce números enteros, con \"de\" menor o igual que \"hasta\"."
+  },
+  "rangeTooMany": {
+    "message": "Máximo $1 capítulos a la vez."
+  },
+  "rangeSummaryOk": {
+    "message": "$1 añadidos, $2 ya estaban en la lista."
+  },
+  "rangeSummaryFailed": {
+    "message": "$1 añadidos, $2 ya estaban en la lista, $3 no encontrados ($4)."
+  },
+  "rangeCancelled": {
+    "message": "Cancelado."
+  },
+  "mergeSelected": {
+    "message": "Unir seleccionados"
+  },
+  "sendingProgress": {
+    "message": "Enviando correo $1 de $2…"
+  },
+  "chapterN": {
+    "message": "Capítulo $1"
+  },
+  "imagesProgress": {
+    "message": "Descargando imágenes $1 de $2…"
+  },
+  "imagesFailed": {
+    "message": "$1 imagen(es) no se pudieron incluir"
+  },
+  "comicPages": {
+    "message": "$1 páginas"
+  },
+  "sentSomeTooLarge": {
+    "message": "$1 archivo(s) enviado(s) a $2; $3 demasiado grande(s) para correo"
+  },
+  "downloadTooLarge": {
+    "message": "Descargar los que no cupieron"
+  },
+  "sentBeforeError": {
+    "message": "$1 archivo(s) ya se habían enviado antes del error."
+  },
+  "itemsFailed": {
+    "message": "No se pudo generar (ninguna página): $1"
+  }
+}

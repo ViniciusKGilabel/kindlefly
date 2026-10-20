@@ -1,0 +1,209 @@
+{
+  "extName": {
+    "message": "kindlefly"
+  },
+  "extDescription": {
+    "message": "Turn web pages into EPUB and send them to your Kindle via Gmail."
+  },
+  "error_not_connected": {
+    "message": "Not connected to Google. Connect your account first."
+  },
+  "error_auth_cancelled": {
+    "message": "Sign-in was cancelled. You can try again."
+  },
+  "error_auth_failed": {
+    "message": "Google sign-in failed. Please try again."
+  },
+  "error_kindle_address_missing": {
+    "message": "Set your Kindle address in the settings first."
+  },
+  "error_kindle_address_invalid": {
+    "message": "The Kindle address must end with @kindle.com."
+  },
+  "error_too_large": {
+    "message": "The content is too large to send by email."
+  },
+  "error_network": {
+    "message": "Network error. Check your connection and try again."
+  },
+  "error_gmail_error": {
+    "message": "Gmail could not send the message."
+  },
+  "error_extract_failed": {
+    "message": "Could not extract the content of this page."
+  },
+  "error_image_failed": {
+    "message": "Could not download or convert an image."
+  },
+  "settings": {
+    "message": "Settings"
+  },
+  "back": {
+    "message": "Back"
+  },
+  "grayscaleImages": {
+    "message": "Grayscale images"
+  },
+  "kindleAddressLabel": {
+    "message": "Kindle address"
+  },
+  "kindleAddressPlaceholder": {
+    "message": "name@kindle.com"
+  },
+  "save": {
+    "message": "Save"
+  },
+  "saved": {
+    "message": "Saved"
+  },
+  "googleAccount": {
+    "message": "Google account"
+  },
+  "connectGoogle": {
+    "message": "Connect Google account"
+  },
+  "connectedAs": {
+    "message": "Connected as $1"
+  },
+  "disconnect": {
+    "message": "Disconnect"
+  },
+  "amazonReminder": {
+    "message": "In your Amazon account, add the Gmail address above to the \"Approved Personal Document E-mail List\" (Content & Devices > Preferences > Personal Document Settings). Otherwise Amazon will discard the documents."
+  },
+  "clientIdMissing": {
+    "message": "Google client ID not configured. Follow docs/setup-google-oauth.md and rebuild the extension."
+  },
+  "titleLabel": {
+    "message": "Title"
+  },
+  "authorLabel": {
+    "message": "Author"
+  },
+  "downloadEpub": {
+    "message": "Download EPUB"
+  },
+  "sendToKindle": {
+    "message": "Send to Kindle"
+  },
+  "extracting": {
+    "message": "Extracting page…"
+  },
+  "sending": {
+    "message": "Sending…"
+  },
+  "previewLabel": {
+    "message": "Preview"
+  },
+  "retryExtract": {
+    "message": "Try again"
+  },
+  "error_scope_missing": {
+    "message": "The email-sending permission was not granted. Reconnect your account and tick the Gmail send permission."
+  },
+  "error_unexpected": {
+    "message": "An unexpected error occurred."
+  },
+  "addToList": {
+    "message": "Add to list"
+  },
+  "selectAll": {
+    "message": "Select all"
+  },
+  "clearList": {
+    "message": "Clear list"
+  },
+  "remove": {
+    "message": "Remove from list"
+  },
+  "emptyList": {
+    "message": "No pages in the list. Open an article and click \"Add to list\"."
+  },
+  "downloadSelected": {
+    "message": "Download selected ($1)"
+  },
+  "sendSelected": {
+    "message": "Send selected ($1)"
+  },
+  "hintNeedKindle": {
+    "message": "Save your Kindle address in Settings to send."
+  },
+  "hintNeedAccount": {
+    "message": "Connect your Google account in Settings to send."
+  },
+  "sentCount": {
+    "message": "$1 file(s) sent to $2"
+  },
+  "restrictedPage": {
+    "message": "This page can't be extracted (browser or store internal page)."
+  },
+  "error_restricted_page": {
+    "message": "This page can't be extracted (browser or store internal page)."
+  },
+  "selectItem": {
+    "message": "Select $1"
+  },
+  "rangeLabel": {
+    "message": "Chapters"
+  },
+  "rangeFrom": {
+    "message": "from"
+  },
+  "rangeTo": {
+    "message": "to"
+  },
+  "rangeAdd": {
+    "message": "Add chapters"
+  },
+  "rangeCancel": {
+    "message": "Cancel"
+  },
+  "rangeFetching": {
+    "message": "Fetching $1 of $2…"
+  },
+  "rangeInvalid": {
+    "message": "Enter whole numbers, with \"from\" less than or equal to \"to\"."
+  },
+  "rangeTooMany": {
+    "message": "At most $1 chapters at a time."
+  },
+  "rangeSummaryOk": {
+    "message": "$1 added, $2 already in the list."
+  },
+  "rangeSummaryFailed": {
+    "message": "$1 added, $2 already in the list, $3 not found ($4)."
+  },
+  "rangeCancelled": {
+    "message": "Cancelled."
+  },
+  "mergeSelected": {
+    "message": "Merge selected"
+  },
+  "sendingProgress": {
+    "message": "Sending email $1 of $2…"
+  },
+  "chapterN": {
+    "message": "Chapter $1"
+  },
+  "imagesProgress": {
+    "message": "Downloading images $1 of $2…"
+  },
+  "imagesFailed": {
+    "message": "$1 image(s) could not be included"
+  },
+  "comicPages": {
+    "message": "$1 pages"
+  },
+  "sentSomeTooLarge": {
+    "message": "$1 file(s) sent to $2; $3 too large for email"
+  },
+  "downloadTooLarge": {
+    "message": "Download the ones that did not fit"
+  },
+  "sentBeforeError": {
+    "message": "$1 file(s) had already been sent before the error."
+  },
+  "itemsFailed": {
+    "message": "Could not be generated (no pages): $1"
+  }
+}
