@@ -8,6 +8,8 @@ export interface ChapterUrl {
   number: number;
   /** Largura dos dígitos (preserva zeros à esquerda); 0 = sem preenchimento. */
   width?: number;
+  /** O pathname original terminava em '/'. */
+  trailingSlash?: boolean;
 }
 
 export function parseChapterUrl(url: string | undefined): ChapterUrl | null {
@@ -30,12 +32,13 @@ export function parseChapterUrl(url: string | undefined): ChapterUrl | null {
     base: u.origin + path.slice(0, cut + 1),
     prefix: m[1]!,
     number,
+    trailingSlash: u.pathname.length > 1 && u.pathname.endsWith('/'),
     width: digits.length > 1 && digits.startsWith('0') ? digits.length : 0,
   };
 }
 
 export function chapterUrl(c: ChapterUrl, n: number): string {
-  return `${c.base}${c.prefix}${String(n).padStart(c.width ?? 0, '0')}`;
+  return `${c.base}${c.prefix}${String(n).padStart(c.width ?? 0, '0')}${c.trailingSlash ? '/' : ''}`;
 }
 
 export function validateRange(from: number, to: number): 'ok' | 'invalid' | 'too_many' {

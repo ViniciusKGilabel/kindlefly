@@ -12,7 +12,9 @@ describe('parseChapterUrl', () => {
     const c = parseChapterUrl('https://site.example/n/chapter-450/')!;
     expect(c.prefix).toBe('chapter-');
     expect(c.number).toBe(450);
-    expect(chapterUrl(c, 451)).toBe('https://site.example/n/chapter-451');
+    expect(chapterUrl(c, 451)).toBe('https://site.example/n/chapter-451/');
+    expect(chapterUrl(c, 450)).toBe('https://site.example/n/chapter-450/');
+    expect(chapterUrl(parseChapterUrl('https://site.example/n/chapter-450')!, 451)).toBe('https://site.example/n/chapter-451');
   });
   test('ignora query e hash', () => {
     const c = parseChapterUrl('https://site.example/n/chapter/450?x=1#y')!;

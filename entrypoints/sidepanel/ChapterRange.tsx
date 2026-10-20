@@ -24,6 +24,7 @@ export default function ChapterRange({ chapter, disabled, onItem, onRunningChang
 
   useEffect(() => {
     setFrom(String(chapter.number));
+    setTo('');
   }, [chapter.base, chapter.prefix, chapter.number]);
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -52,7 +53,7 @@ export default function ChapterRange({ chapter, disabled, onItem, onRunningChang
       });
       const text =
         r.failed.length > 0
-          ? t('rangeSummaryFailed', [String(r.added), String(r.duplicates), String(r.failed.length), r.failed.join(', ')])
+          ? t('rangeSummaryFailed', [String(r.added), String(r.duplicates), String(r.failed.length), (r.failed.length > 10 ? `${r.failed.slice(0, 10).join(', ')}…` : r.failed.join(', '))])
           : t('rangeSummaryOk', [String(r.added), String(r.duplicates)]);
       setSummary(r.cancelled ? `${t('rangeCancelled')} ${text}` : text);
     } catch (e) {

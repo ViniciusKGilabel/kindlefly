@@ -45,6 +45,16 @@ describe('fetchChapter', () => {
     const r = await fetchChapter(URL_, resp(page) as unknown as typeof fetch);
     expect(r.ok && r.item.html).toContain('https://site.example/n/chapter/6');
   });
+  test('base usa a URL final da resposta; sourceUrl é a pedida', async () => {
+    const f = (async () => {
+      const r = new Response(page);
+      Object.defineProperty(r, 'url', { value: 'https://other.example/z/chapter/5' });
+      return r;
+    }) as unknown as typeof fetch;
+    const r = await fetchChapter(URL_, f);
+    expect(r.ok && r.item.sourceUrl).toBe(URL_);
+    expect(r.ok && r.item.html).toContain('https://other.example/n/chapter/6');
+  });
   test('abort propaga', async () => {
     const f = (async () => { throw new DOMException('aborted', 'AbortError'); }) as unknown as typeof fetch;
     await expect(fetchChapter(URL_, f)).rejects.toMatchObject({ name: 'AbortError' });
