@@ -5,7 +5,7 @@ import type { EpubFile } from '../../src/core/types';
 import { KfError } from '../../src/core/errors';
 import { activeTabUrl, errorMessage, extractActiveTab } from '../../src/panel/extract-active';
 import { itemsToEpubs } from '../../src/panel/pipeline';
-import { htmlToChapter } from '../../src/extract/to-chapter';
+import { htmlToChapter, previewBody } from '../../src/extract/to-chapter';
 import {
   addItem, removeItem, selectedItems, setAllSelected, setSelected, updateMeta, type QueueItem,
 } from '../../src/queue/queue';
@@ -21,6 +21,7 @@ import QueueList from './QueueList';
 type Status =
   | { s: 'idle' }
   | { s: 'extracting' }
+  | { s: 'images'; done: number; total: number }
   | { s: 'sending'; sent?: number; total?: number }
   | { s: 'sent'; count: number; to: string }
   | { s: 'info'; text: string }
@@ -70,6 +71,7 @@ export default function Home() {
   const queueRef = useRef<QueueItem[]>([]);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>({ s: 'idle' });
+  const [notice, setNotice] = useState<string | null>(null);
   const [kindle, setKindle] = useState<string | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -149,12 +151,12 @@ export default function Home() {
   const selected = selectedItems(queue);
   const n = selected.length;
   const focused = queue.find((i) => i.id === focusedId) ?? null;
-  const busy = status.s === 'extracting' || status.s === 'sending' || ranging;
+  const busy = status.s === 'extracting' || status.s === 'sending' || status.s === 'images' || ranging;
   const sendHint = !kindle ? t('hintNeedKindle') : !account ? t('hintNeedAccount') : null;
 
   // Já sanitizado por htmlToChapter (sem scripts, handlers nem iframes): só então vai para o DOM.
   const previewHtml = useMemo(
-    () => (focused && focused.kind !== 'merged' ? htmlToChapter(focused.html, { id: 'c1', title: focused.title }).xhtmlBody : ''),
+    () => (focused && focused.kind !== 'merged' ? previewBody(htmlToChapter(focused.html, { id: 'c1', title: focused.title })) : ''),
     [focused?.id, focused?.html, focused?.title, focused?.kind],
   );
 
@@ -167,9 +169,14 @@ export default function Home() {
   }
 
   async function onDownload() {
+    setNotice(null);
     await saver.current.flush();
     try {
-      const files = await itemsToEpubs(selectedItems(queueRef.current));
+      const { files, failedImages } = await itemsToEpubs(selectedItems(queueRef.current), {
+        onProgress: (done, total) => setStatus({ s: 'images', done, total }),
+      });
+      setStatus({ s: 'idle' });
+      if (failedImages > 0) setNotice(t('imagesFailed', [String(failedImages)]));
       for (const [i, f] of files.entries()) {
         if (i > 0) await sleep(DOWNLOAD_GAP_MS);
         download(f);
@@ -180,11 +187,15 @@ export default function Home() {
   }
 
   async function onSend() {
+    setNotice(null);
     await saver.current.flush();
     setStatus({ s: 'sending' });
     try {
       const items = selectedItems(queueRef.current);
-      const files = await itemsToEpubs(items);
+      const { files, failedImages } = await itemsToEpubs(items, {
+        onProgress: (done, total) => setStatus({ s: 'images', done, total }),
+      });
+      setStatus({ s: 'sending' });
       const kindleAddress = await getKindleAddress();
       const r = await sendToKindle(files, {
         auth,
@@ -197,6 +208,7 @@ export default function Home() {
         setStatus({ s: 'error', text: `${t('error_too_large')} ${r.tooLarge.join(', ')}` });
       } else {
         setStatus({ s: 'sent', count: files.length, to: kindleAddress ?? '' });
+        if (failedImages > 0) setNotice(t('imagesFailed', [String(failedImages)]));
       }
     } catch (e) {
       setStatus({ s: 'error', text: errorMessage(e, t) });
@@ -219,6 +231,9 @@ export default function Home() {
       )}
 
       {status.s === 'extracting' && <p role="status">{t('extracting')}</p>}
+      {status.s === 'images' && (
+        <p role="status">{t('imagesProgress', [String(Math.min(status.done + 1, status.total)), String(status.total)])}</p>
+      )}
       {status.s === 'sending' && (
         <p role="status">
           {status.sent !== undefined && status.total !== undefined && status.total > 0
@@ -234,6 +249,11 @@ export default function Home() {
       {status.s === 'info' && (
         <p className="hint" role="status">
           {status.text}
+        </p>
+      )}
+      {notice && (
+        <p className="hint" role="status">
+          {notice}
         </p>
       )}
       {status.s === 'error' && (

@@ -17,6 +17,7 @@ export interface Chapter {
   title: string;
   xhtmlBody: string;
   headings: Heading[];
+  imageUrls?: string[]; // índice N ↔ marcador `kf-img:N` no xhtmlBody
 }
 export interface EpubImage {
   href: string;
@@ -30,7 +31,7 @@ export interface Book {
   identifier: string; // 'urn:uuid:' + uuid
   modified: Date;
   chapters: Chapter[];
-  images: EpubImage[]; // vazio no plano 1
+  images: EpubImage[]; 
 }
 export interface EpubFile {
   filename: string;

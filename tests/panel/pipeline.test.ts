@@ -64,7 +64,7 @@ test.skipIf(!hasJava)('arquivo gerado passa no epubcheck', async () => {
 
 test('itemsToEpubs: títulos iguais ganham sufixo e usa título editado do item', async () => {
   const mk = (id: string, title: string) => ({ ...item, id, title, selected: true, addedAt: 1 });
-  const files = await itemsToEpubs([mk('1', 'X'), mk('2', 'X'), mk('3', 'X'), mk('4', 'Editado')]);
+  const { files } = await itemsToEpubs([mk('1', 'X'), mk('2', 'X'), mk('3', 'X'), mk('4', 'Editado')]);
   expect(files.map((f) => f.filename)).toEqual(['X.epub', 'X (2).epub', 'X (3).epub', 'Editado.epub']);
   const opf = await (await JSZip.loadAsync(files[3]!.data)).file('OEBPS/content.opf')!.async('string');
   expect(opf).toContain('<dc:title>Editado</dc:title>');
@@ -78,7 +78,7 @@ test('itemsToEpubs: item merged → 1 arquivo, N capítulos no nav', async () =>
       { title: 'Cap Dois', html: '<p>dois</p>', sourceUrl: 'u2' },
     ],
   };
-  const files = await itemsToEpubs([merged]);
+  const { files } = await itemsToEpubs([merged]);
   expect(files).toHaveLength(1);
   expect(files[0]!.filename).toBe('Livro 1–2.epub');
   const zip = await JSZip.loadAsync(files[0]!.data);
@@ -101,7 +101,7 @@ test('merged: título de parte vazio vira "Chapter N" e passa no epubcheck', asy
       { title: '   ', html: '<p>dois</p>', sourceUrl: 'u2' },
     ],
   };
-  const files = await itemsToEpubs([merged]);
+  const { files } = await itemsToEpubs([merged]);
   const nav = await (await JSZip.loadAsync(files[0]!.data)).file('OEBPS/nav.xhtml')!.async('string');
   expect(nav).toContain('Chapter 2');
   if (hasJava) {
@@ -111,3 +111,27 @@ test('merged: título de parte vazio vira "Chapter N" e passa no epubcheck', asy
     expect(r.stdout + r.stderr).toContain('No errors or warnings detected');
   }
 }, 120_000);
+
+test('itemsToEpubs: imagens entram no EPUB (manifest + arquivo) e falhas são contadas', async () => {
+  const withImgs = {
+    ...item, id: 'i', title: 'Com imagens', selected: true, addedAt: 1,
+    html: '<p>oi</p><img src="https://x.test/a.jpg" alt="A"><img src="https://x.test/bad.jpg" alt="B">',
+  };
+  const progress: Array<[number, number]> = [];
+  const r = await itemsToEpubs([withImgs], {
+    grayscale: true,
+    onProgress: (d, t) => progress.push([d, t]),
+    embed: {
+      fetchImage: async (u) => { if (u.includes('bad')) throw new Error('x'); return new Blob([u]); },
+      convert: async () => [{ data: new Uint8Array([0xff, 0xd8, 0xff]), width: 1, height: 1 }],
+    },
+  });
+  expect(r.failedImages).toBe(1);
+  expect(progress.at(-1)).toEqual([2, 2]);
+  const zip = await JSZip.loadAsync(r.files[0]!.data);
+  expect(zip.file('OEBPS/images/i0-0.jpg')).not.toBeNull();
+  expect(await zip.file('OEBPS/content.opf')!.async('string')).toContain('images/i0-0.jpg');
+  const ch = await zip.file('OEBPS/chapters/c1.xhtml')!.async('string');
+  expect(ch).toContain('<img src="../images/i0-0.jpg" alt="A" />');
+  expect(ch).not.toContain('kf-img');
+});

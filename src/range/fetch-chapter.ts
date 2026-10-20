@@ -1,4 +1,5 @@
 import type { ExtractedItem } from '../core/types';
+import { resolveLazyImages } from '../extract/lazy-images';
 import { extractFromDocument } from '../extract/readability';
 
 export type ChapterResult =
@@ -27,6 +28,7 @@ export async function fetchChapter(url: string, fetchFn: typeof fetch, signal?: 
     const base = doc.createElement('base');
     base.setAttribute('href', baseUrl);
     doc.head.prepend(base);
+    resolveLazyImages(doc, baseUrl);
     return { ok: true, item: extractFromDocument(doc, url) };
   } catch {
     return { ok: false, reason: 'extract' };

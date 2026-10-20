@@ -184,5 +184,11 @@
   },
   "chapterN": {
     "message": "Chapter $1"
+  },
+  "imagesProgress": {
+    "message": "Downloading images $1 of $2…"
+  },
+  "imagesFailed": {
+    "message": "$1 image(s) could not be included"
   }
 }

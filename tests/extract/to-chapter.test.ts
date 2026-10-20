@@ -53,3 +53,35 @@ test('título vazio nunca gera h1 vazio', () => {
   expect(ch.title.trim()).not.toBe('');
   expect(ch.headings.every((h) => h.text.trim() !== '')).toBe(true);
 });
+
+test('img http(s) é mantida com marcador kf-img:N e alt; imageUrls em ordem', () => {
+  const ch = htmlToChapter('<p><img src="https://x.test/a.jpg" alt="Foto &amp; cia" class="c" width="3"></p><img src="https://x.test/b.jpg">', opts);
+  expect(ch.imageUrls).toEqual(['https://x.test/a.jpg', 'https://x.test/b.jpg']);
+  expect(ch.xhtmlBody).toContain('<img src="kf-img:0" alt="Foto &amp; cia" />');
+  expect(ch.xhtmlBody).toContain('kf-img:1');
+  expect(ch.xhtmlBody).not.toContain('class=');
+  expect(ch.xhtmlBody).not.toContain('width=');
+});
+
+test('URL repetida reusa o mesmo índice', () => {
+  const ch = htmlToChapter('<img src="https://x.test/a.jpg"><img src="https://x.test/a.jpg"><img src="https://x.test/b.jpg">', opts);
+  expect(ch.imageUrls).toEqual(['https://x.test/a.jpg', 'https://x.test/b.jpg']);
+  expect(ch.xhtmlBody.match(/kf-img:0/g)).toHaveLength(2);
+});
+
+test('picture é desembrulhada, source removido', () => {
+  const ch = htmlToChapter('<picture><source srcset="https://x.test/a.webp"><img src="https://x.test/a.jpg" alt="p"></picture>', opts);
+  expect(ch.xhtmlBody).not.toContain('picture');
+  expect(ch.xhtmlBody).not.toContain('source');
+  expect(ch.imageUrls).toEqual(['https://x.test/a.jpg']);
+});
+
+test('data:, javascript: e relativas são descartadas', () => {
+  const ch = htmlToChapter('<img src="data:image/png;base64,AAAA"><img src="javascript:x()"><img src="a.png"><img>', opts);
+  expect(ch.xhtmlBody).not.toContain('<img');
+  expect(ch.imageUrls ?? []).toEqual([]);
+});
+
+test('sem imagens: imageUrls vazio', () => {
+  expect(htmlToChapter('<p>x</p>', opts).imageUrls ?? []).toEqual([]);
+});
