@@ -9,11 +9,19 @@ const MAX_WORDS_UNMARKED = 300;
 
 const isHttp = (u: string) => /^https?:\/\//i.test(u);
 
+const PAGE_ATTRS = ['data-page', 'data-page-index'];
+const NUMERIC = /^\s*\d+\s*$/;
+
+/** `data-page`/`data-page-index` numérico no próprio elemento (sites Inertia.js põem JSON em data-page na raiz). */
+function hasPageNumber(el: Element | null): boolean {
+  return !!el && PAGE_ATTRS.some((a) => NUMERIC.test(el.getAttribute(a) ?? ''));
+}
+
+/** Marcada como página: número de página na própria img ou no pai direto, ou alt "Page N". */
 function isPageMarked(img: Element): boolean {
   return (
-    img.hasAttribute('data-page') ||
-    img.hasAttribute('data-page-index') ||
-    img.closest('[data-page]') !== null ||
+    hasPageNumber(img) ||
+    hasPageNumber(img.parentElement) ||
     /page\s*\d+/i.test(img.getAttribute('alt') ?? '')
   );
 }

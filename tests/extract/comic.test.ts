@@ -98,6 +98,33 @@ describe('regras de borda', () => {
   });
 });
 
+describe('marcação data-page (E)', () => {
+  const pages = (attrs: (i: number) => string) =>
+    [1, 2, 3, 4].map((i) => `<img src="https://a.example/p${i}.jpg" ${attrs(i)}>`).join('');
+  test('data-page não numérico na raiz (Inertia) não marca as imagens', () => {
+    const logo = '<img src="https://a.example/x1.jpg"><img src="https://a.example/x2.jpg"><img src="https://a.example/x3.jpg">';
+    // 3 imagens soltas na raiz com data-page JSON: antes viravam "quadrinho marcado".
+    const d = parse(`<body><div id="app" data-page='{"component":"Post","props":{}}'><article><p>texto</p>${logo}</article></div></body>`);
+    expect(extractComicImages(d)).toBeNull();
+  });
+  test('data-page numérico em ancestral distante não conta', () => {
+    const d = parse(`<body><div data-page="1"><section><div>${'<img src="https://a.example/1.jpg"><img src="https://a.example/2.jpg"><img src="https://a.example/3.jpg">'}</div></section></div></body>`);
+    expect(extractComicImages(d)).toBeNull();
+  });
+  test('data-page numérico no pai direto marca', () => {
+    const g = [1, 2, 3].map((i) => `<div data-page="${i}"><img src="https://a.example/p${i}.jpg"></div>`).join('');
+    expect(extractComicImages(parse(`<body><div>${g}</div></body>`))).toHaveLength(3);
+  });
+  test('data-page-index não numérico na própria img não marca', () => {
+    // 3 imagens: marcadas seriam quadrinho (mín. 3); sem marcação não (mín. 4).
+    const three = [1, 2, 3].map((i) => `<img src="https://a.example/p${i}.jpg" data-page-index="abc">`).join('');
+    expect(extractComicImages(parse(`<body><div>${three}</div></body>`))).toBeNull();
+  });
+  test('data-page-index numérico na própria img marca', () => {
+    expect(extractComicImages(parse(`<body><div>${pages((i) => `data-page-index=" ${i} "`)}</div></body>`))).toHaveLength(4);
+  });
+});
+
 describe('extractFromDocument com quadrinho', () => {
   test('kind comic, images, html vazio, título limpo', () => {
     const r = extractFromDocument(load('comic-reader.html'), 'https://reader.example/c/10');
