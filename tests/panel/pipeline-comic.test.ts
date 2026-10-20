@@ -4,8 +4,8 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import JSZip from 'jszip';
-import { expect, test } from 'vitest';
-import { itemsToEpubs } from '../../src/panel/pipeline';
+import { describe, expect, test } from 'vitest';
+import { itemToEpub, itemsToEpubs } from '../../src/panel/pipeline';
 import type { QueueItem } from '../../src/queue/queue';
 
 // JPEG 1x1 sintético, válido (gerado localmente; sem conteúdo de terceiros).
@@ -80,3 +80,59 @@ test.skipIf(!hasJava)('epubcheck: EPUB de quadrinho com JPEGs reais', async () =
   const r = await itemsToEpubs([comic()], { grayscale: true, embed });
   expect(check(r.files[0]!.data)).toContain('No errors or warnings detected');
 }, 120_000);
+
+describe('quadrinho sem nenhuma página (D)', () => {
+  const failing = { ...embed, fetchImage: async () => { throw new Error('offline'); } };
+  const failOn = (frag: string) => ({
+    ...embed,
+    fetchImage: async (u: string) => { if (u.includes(frag)) throw new Error('x'); return new Blob([u]); },
+  });
+  const article: QueueItem = {
+    id: 'a', sourceUrl: 'https://x.test/a', title: 'Artigo', author: 'A', language: 'en',
+    html: '<p>texto</p>', kind: 'article', selected: true, addedAt: 1,
+  };
+  const mergedOf = (parts: NonNullable<QueueItem['parts']>): QueueItem => ({
+    ...comic({ id: 'm', title: 'Livro', images: undefined }), kind: 'merged', sourceUrl: 'merged:m', parts,
+  });
+
+  test('itemToEpub: quadrinho sem páginas → KfError image_failed', async () => {
+    await expect(itemToEpub(comic(), { title: '', author: '' }, { grayscale: true, embed: failing }))
+      .rejects.toMatchObject({ code: 'image_failed', message: expect.stringContaining('nenhuma página') });
+  });
+
+  test('itemsToEpubs: item sem páginas falha sozinho; os outros seguem e o título é informado', async () => {
+    const r = await itemsToEpubs([comic(), article], { grayscale: true, embed: failing });
+    expect(r.files.map((f) => f.filename)).toEqual(['Artigo.epub']);
+    expect(r.failedItems).toEqual(['Quadrinho & Cia <1>']);
+    expect(r.failedImages).toBe(0);
+  });
+
+  test('juntado: capítulo de quadrinho sem páginas sai do livro (e do sumário)', async () => {
+    const merged = mergedOf([
+      { title: 'Cap 1', html: '', sourceUrl: 'u1', images: ['https://x.test/ok.jpg'] },
+      { title: 'Cap 2', html: '', sourceUrl: 'u2', images: ['https://x.test/bad1.jpg', 'https://x.test/bad2.jpg'] },
+      { title: 'Cap 3', html: '<p>texto</p>', sourceUrl: 'u3' },
+    ]);
+    const r = await itemsToEpubs([merged], { grayscale: true, embed: failOn('bad') });
+    expect(r.failedItems).toEqual([]);
+    expect(r.failedImages).toBe(2);
+    const zip = await JSZip.loadAsync(r.files[0]!.data);
+    const chapters = Object.keys(zip.files).filter((f) => /chapters\/c\d+\.xhtml$/.test(f));
+    expect(chapters).toHaveLength(2);
+    const nav = await zip.file('OEBPS/nav.xhtml')!.async('string');
+    expect(nav).toContain('Cap 1');
+    expect(nav).not.toContain('Cap 2');
+    expect(nav).toContain('Cap 3');
+    if (hasJava) expect(check(r.files[0]!.data)).toContain('No errors or warnings detected');
+  }, 120_000);
+
+  test('juntado sem nenhuma parte válida → item falha', async () => {
+    const merged = mergedOf([
+      { title: 'Cap 1', html: '', sourceUrl: 'u1', images: ['https://x.test/a.jpg'] },
+      { title: 'Cap 2', html: '', sourceUrl: 'u2', images: ['https://x.test/b.jpg'] },
+    ]);
+    const r = await itemsToEpubs([merged], { grayscale: true, embed: failing });
+    expect(r.files).toEqual([]);
+    expect(r.failedItems).toEqual(['Livro']);
+  });
+});
