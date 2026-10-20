@@ -12,6 +12,9 @@ test('mergeTitle: intervalo', () => {
     .toBe('Shadow Slave Chapter 450–460');
   expect(mergeTitle(['Cap 1 (pt)', 'Cap 3 (pt)'])).toBe('Cap 1–3 (pt)');
 });
+test('mergeTitle: preserva zeros à esquerda', () => {
+  expect(mergeTitle(['Ch 009', 'Ch 010'])).toBe('Ch 009–010');
+});
 test('mergeTitle: um só número, sem número, prefixos diferentes', () => {
   expect(mergeTitle(['Chapter 5', 'Chapter 5'])).toBe('Chapter 5');
   expect(mergeTitle(['Intro', 'Fim', 'Meio'])).toBe('Intro (+2)');

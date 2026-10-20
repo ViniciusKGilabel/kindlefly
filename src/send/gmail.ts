@@ -63,6 +63,7 @@ export async function sendToKindle(
   const tooLargeNames = tooLarge.map((i) => files[i]!.filename);
   let emailsSent = 0;
   const sleep = d.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  if (groups.length > 0) d.onProgress?.(0, groups.length);
   for (const g of groups) {
     if (emailsSent > 0) await sleep(EMAIL_DELAY_MS);
     const raw = buildMimeMessage({ from, to, subject: d.subject, attachments: g.map((i) => files[i]!) });

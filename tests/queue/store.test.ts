@@ -38,3 +38,8 @@ test('parts malformadas → item descartado', async () => {
   const bad = { id: 'm', sourceUrl: 'merged:m', title: 'T', author: 'A', language: 'en', html: '', kind: 'merged', parts: [{ title: 1 }], selected: true, addedAt: 1 };
   expect(await loadQueue(fake({ 'kf.queue': [bad] }))).toEqual([]);
 });
+
+test('merged sem parts ou com parts vazio → descartado', async () => {
+  const base = { id: 'm', sourceUrl: 'merged:m', title: 'T', author: 'A', language: 'en', html: '', kind: 'merged', selected: true, addedAt: 1 };
+  expect(await loadQueue(fake({ 'kf.queue': [base, { ...base, parts: [] }] }))).toEqual([]);
+});

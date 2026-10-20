@@ -26,7 +26,8 @@ function isItem(x: unknown): x is QueueItem {
     typeof o.html === 'string' &&
     typeof o.selected === 'boolean' &&
     typeof o.addedAt === 'number' &&
-    (o.parts === undefined || (Array.isArray(o.parts) && o.parts.every(isPart)))
+    (o.parts === undefined || (Array.isArray(o.parts) && o.parts.every(isPart))) &&
+    (o.kind !== 'merged' || (Array.isArray(o.parts) && o.parts.length > 0))
   );
 }
 

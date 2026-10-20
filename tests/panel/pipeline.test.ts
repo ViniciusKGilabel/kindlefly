@@ -92,3 +92,22 @@ test('itemsToEpubs: item merged → 1 arquivo, N capítulos no nav', async () =>
     expect(r.stdout + r.stderr).toContain('No errors or warnings detected');
   }
 }, 120_000);
+
+test('merged: título de parte vazio vira "Chapter N" e passa no epubcheck', async () => {
+  const merged = {
+    ...item, id: 'm', kind: 'merged' as const, html: '', sourceUrl: 'merged:m', title: 'Livro', selected: true, addedAt: 1,
+    parts: [
+      { title: 'Cap Um', html: '<p>um</p>', sourceUrl: 'u1' },
+      { title: '   ', html: '<p>dois</p>', sourceUrl: 'u2' },
+    ],
+  };
+  const files = await itemsToEpubs([merged]);
+  const nav = await (await JSZip.loadAsync(files[0]!.data)).file('OEBPS/nav.xhtml')!.async('string');
+  expect(nav).toContain('Chapter 2');
+  if (hasJava) {
+    const p = join(mkdtempSync(join(tmpdir(), 'kf-')), 'a.epub');
+    writeFileSync(p, files[0]!.data);
+    const r = spawnSync('node', ['scripts/epubcheck.mjs', p], { encoding: 'utf8' });
+    expect(r.stdout + r.stderr).toContain('No errors or warnings detected');
+  }
+}, 120_000);

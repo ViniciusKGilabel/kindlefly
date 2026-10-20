@@ -1,8 +1,19 @@
+import { t } from '../core/i18n';
 import { sanitizeFilename } from '../core/filename';
 import type { Book, EpubFile, ExtractedItem } from '../core/types';
 import type { QueueItem } from '../queue/queue';
 import { buildEpub } from '../epub/build';
 import { htmlToChapter } from '../extract/to-chapter';
+
+function chapterName(n: number): string {
+  try {
+    const s = t('chapterN', [String(n)]);
+    if (s !== 'chapterN') return s;
+  } catch {
+    // sem browser.i18n (testes): cai no inglês.
+  }
+  return `Chapter ${n}`;
+}
 
 /** Monta um livro de 1 capítulo a partir do item extraído (com título/autor editados) e gera o EPUB. */
 export async function itemToEpub(
@@ -12,7 +23,7 @@ export async function itemToEpub(
   const itemTitle = edits.title.trim() || item.title;
   const chapters =
     item.kind === 'merged' && item.parts
-      ? item.parts.map((p, i) => htmlToChapter(p.html, { id: 'c' + (i + 1), title: p.title }))
+      ? item.parts.map((p, i) => htmlToChapter(p.html, { id: 'c' + (i + 1), title: p.title.trim() || chapterName(i + 1) }))
       : [htmlToChapter(item.html, { id: 'c1', title: itemTitle })];
   const title = edits.title.trim() || chapters[0]!.title.trim() || 'kindlefly';
   const author = edits.author.trim() || item.author.trim() || 'kindlefly';

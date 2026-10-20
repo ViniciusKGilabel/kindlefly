@@ -8,11 +8,12 @@ export function mergeTitle(titles: string[]): string {
     const pre = ms[0]![1]!.trim();
     const suf = ms[0]![3]!;
     if (ms.every((m) => m![1]!.trim() === pre && m![3] === suf)) {
-      const nums = ms.map((m) => Number(m![2]));
+      const strs = ms.map((m) => m![2]!);
+      const nums = strs.map(Number);
       const min = Math.min(...nums);
       const max = Math.max(...nums);
       if (min === max) return titles[0]!;
-      return `${pre} ${min}–${max}${suf}`.replace(/\s+/g, ' ').trim();
+      return `${pre} ${strs[nums.indexOf(min)]}–${strs[nums.indexOf(max)]}${suf}`.replace(/\s+/g, ' ').trim();
     }
   }
   return `${titles[0] ?? ''} (+${titles.length - 1})`;

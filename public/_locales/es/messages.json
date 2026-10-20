@@ -175,5 +175,8 @@
   },
   "sendingProgress": {
     "message": "Enviando correo $1 de $2…"
+  },
+  "chapterN": {
+    "message": "Capítulo $1"
   }
 }

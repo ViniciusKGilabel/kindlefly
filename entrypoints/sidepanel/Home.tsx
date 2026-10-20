@@ -221,8 +221,8 @@ export default function Home() {
       {status.s === 'extracting' && <p role="status">{t('extracting')}</p>}
       {status.s === 'sending' && (
         <p role="status">
-          {status.sent !== undefined && status.total !== undefined && status.sent < status.total
-            ? t('sendingProgress', [String(status.sent + 1), String(status.total)])
+          {status.sent !== undefined && status.total !== undefined && status.total > 0
+            ? t('sendingProgress', [String(Math.min(status.sent + 1, status.total)), String(status.total)])
             : t('sending')}
         </p>
       )}
