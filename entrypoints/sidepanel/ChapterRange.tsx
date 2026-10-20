@@ -71,12 +71,12 @@ export default function ChapterRange({ chapter, disabled, onItem, onRunningChang
       <div className="row">
         <label htmlFor="range-from">{t('rangeLabel')}: {t('rangeFrom')}</label>
         <input
-          id="range-from" type="number" inputMode="numeric" min={0} value={from}
+          id="range-from" data-testid="range-from" type="number" inputMode="numeric" min={0} value={from}
           disabled={running} onChange={(e) => setFrom(e.target.value)}
         />
         <label htmlFor="range-to">{t('rangeTo')}</label>
         <input
-          id="range-to" type="number" inputMode="numeric" min={0} value={to}
+          id="range-to" data-testid="range-to" type="number" inputMode="numeric" min={0} value={to}
           disabled={running} onChange={(e) => setTo(e.target.value)}
         />
       </div>
@@ -87,9 +87,9 @@ export default function ChapterRange({ chapter, disabled, onItem, onRunningChang
           <button type="button" onClick={() => abortRef.current?.abort()}>{t('rangeCancel')}</button>
         </div>
       ) : (
-        <button type="button" onClick={start} disabled={disabled || validity !== 'ok'}>{t('rangeAdd')}</button>
+        <button type="button" data-testid="range-add" onClick={start} disabled={disabled || validity !== 'ok'}>{t('rangeAdd')}</button>
       )}
-      {summary && <p className="hint" role="status">{summary}</p>}
+      {summary && <p className="hint" role="status" data-testid="range-summary">{summary}</p>}
     </div>
   );
 }

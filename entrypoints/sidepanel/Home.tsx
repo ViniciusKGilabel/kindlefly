@@ -217,7 +217,7 @@ export default function Home() {
 
   return (
     <section className="screen">
-      <button type="button" className="primary" onClick={addActiveTab} disabled={busy || !ready}>
+      <button type="button" className="primary" data-testid="add-to-list" onClick={addActiveTab} disabled={busy || !ready}>
         {t('addToList')}
       </button>
 
@@ -252,7 +252,7 @@ export default function Home() {
         </p>
       )}
       {notice && (
-        <p className="hint" role="status">
+        <p className="hint" role="status" data-testid="notice">
           {notice}
         </p>
       )}
@@ -282,7 +282,7 @@ export default function Home() {
       )}
 
       <div className="row">
-        <button type="button" onClick={onDownload} disabled={busy || n === 0}>
+        <button type="button" data-testid="download" onClick={onDownload} disabled={busy || n === 0}>
           {t('downloadSelected', [String(n)])}
         </button>
         <button type="button" className="primary" onClick={onSend} disabled={busy || n === 0 || sendHint !== null}>
