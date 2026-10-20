@@ -16,7 +16,7 @@
 
 - Imagens no EPUB: só `image/jpeg` (PNG/GIF/WebP/AVIF/SVG de origem viram JPEG; SVG é descartado).
 - `IMAGE_MAX_WIDTH = 1236` px (nunca ampliar); `PAGE_ASPECT = 1648 / 1236`; cortar só se `altura > largura × PAGE_ASPECT × 1.25`.
-- JPEG em tons de cinza, `JPEG_QUALITY = 0.8`.
+- JPEG com `JPEG_QUALITY = 0.8`; **tons de cinza é uma opção** nas Configurações ("Imagens em tons de cinza", chave `kf.grayscale` em `chrome.storage.local`), **ligada por padrão** (Kindle do dono é preto e branco).
 - `IMAGE_CONCURRENCY = 4` downloads simultâneos; `IMAGE_MAX_BYTES = 20 * 1024 * 1024` por imagem baixada (maior → descartada).
 - Imagem que falha (HTTP, decodificação, tamanho) é removida do capítulo; a exportação continua e o painel avisa quantas falharam.
 - Nenhum servidor além do Google e das páginas/imagens que o usuário pediu. Strings nos 3 locales. Todo EPUB passa no epubcheck.
@@ -55,10 +55,11 @@ export function sliceRanges(height: number, width: number, blankRows: (y: number
 **Interfaces:**
 ```ts
 export async function fetchImageBlob(url: string, fetchFn: typeof fetch, signal?: AbortSignal): Promise<Blob>; // não-2xx, content-type não image/*, > IMAGE_MAX_BYTES → throw KfError('image_failed', motivo)
-export async function toKindleJpegs(blob: Blob): Promise<Array<{ data: Uint8Array; width: number; height: number }>>;
+export async function toKindleJpegs(blob: Blob, opts: { grayscale: boolean }): Promise<Array<{ data: Uint8Array; width: number; height: number }>>;
 ```
-`toKindleJpegs`: `createImageBitmap(blob)` → `targetSize` → para cada fatia de `sliceRanges` (luma das linhas lida de um `OffscreenCanvas` em escala reduzida é aceitável) desenha num `OffscreenCanvas` com fundo branco (`fillRect` antes do `drawImage`), aplica cinza (`ctx.filter = 'grayscale(1)'`), `convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY })`. Novo `ErrorCode` `image_failed` (+ `error_image_failed` nos 3 locales).
+`toKindleJpegs`: `createImageBitmap(blob)` → `targetSize` → para cada fatia de `sliceRanges` (luma das linhas lida de um `OffscreenCanvas` em escala reduzida é aceitável) desenha num `OffscreenCanvas` com fundo branco (`fillRect` antes do `drawImage`), aplica cinza só se `opts.grayscale` (`ctx.filter = 'grayscale(1)'`), `convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY })`. Configuração: `getGrayscale(): Promise<boolean>` (padrão `true`) e `setGrayscale(v: boolean)` em `src/settings/store.ts`; checkbox "Imagens em tons de cinza" em `Settings.tsx` (3 locales). Novo `ErrorCode` `image_failed` (+ `error_image_failed` nos 3 locales).
 
+- [ ] Testes de `getGrayscale`/`setGrayscale` (padrão true, round-trip).
 - [ ] Testes unitários de `fetchImageBlob` (fetch falso: 404, `text/html`, tamanho grande, ok). `toKindleJpegs` é coberto na Task 6 (e2e).
 - [ ] RED → implementar → GREEN → commit `feat(images): download e conversão para JPEG`.
 
