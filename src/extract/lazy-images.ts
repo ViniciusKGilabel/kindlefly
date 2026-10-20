@@ -59,7 +59,7 @@ export function resolveLazyImages(doc: Document, baseUrl: string): void {
     let chosen: string | null = null;
     for (const a of LAZY_ATTRS) {
       const v = img.getAttribute(a)?.trim();
-      if (v) {
+      if (v && !isData(v)) {
         chosen = v;
         break;
       }

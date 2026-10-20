@@ -2,7 +2,7 @@ import type { ExtractedItem } from '../core/types';
 
 export interface QueueItem extends ExtractedItem {
   /** Só em itens 'merged': um capítulo por item de origem. */
-  parts?: { title: string; html: string; sourceUrl: string }[];
+  parts?: { title: string; html: string; sourceUrl: string; images?: string[] }[];
   selected: boolean;
   addedAt: number;
 }

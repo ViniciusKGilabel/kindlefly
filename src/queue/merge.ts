@@ -24,7 +24,7 @@ export function mergeItems(items: QueueItem[], id: string, now: number): QueueIt
   const parts = items.flatMap((i) =>
     i.kind === 'merged' && i.parts
       ? i.parts
-      : [{ title: i.title, html: i.html, sourceUrl: i.sourceUrl }],
+      : [{ title: i.title, html: i.html, sourceUrl: i.sourceUrl, ...(i.images ? { images: i.images } : {}) }],
   );
   const first = items[0]!;
   return {

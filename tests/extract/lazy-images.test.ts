@@ -57,3 +57,12 @@ describe('data: e srcset', () => {
       .toBe('https://c.test/w_900,h_50/a.jpg');
   });
 });
+
+describe('data: em atributos preguiçosos', () => {
+  test('data-src data: é ignorado e cai para srcset/src', () => {
+    const img = run('<img src="https://a.example/s.jpg" data-src="data:image/gif;base64,R0lG">');
+    expect(img.getAttribute('src')).toBe('https://a.example/s.jpg');
+    const img2 = run('<img data-original="data:image/gif;base64,R0lG" srcset="a.jpg 100w, b.jpg 200w">');
+    expect(img2.getAttribute('src')).toBe('https://site.example/a/b/b.jpg');
+  });
+});

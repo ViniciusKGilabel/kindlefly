@@ -190,5 +190,8 @@
   },
   "imagesFailed": {
     "message": "$1 imagen(es) no se pudieron incluir"
+  },
+  "comicPages": {
+    "message": "$1 páginas"
   }
 }

@@ -43,3 +43,11 @@ test('merged sem parts ou com parts vazio → descartado', async () => {
   const base = { id: 'm', sourceUrl: 'merged:m', title: 'T', author: 'A', language: 'en', html: '', kind: 'merged', selected: true, addedAt: 1 };
   expect(await loadQueue(fake({ 'kf.queue': [base, { ...base, parts: [] }] }))).toEqual([]);
 });
+
+test('item comic: aceita com images, rejeita sem; parts com images', async () => {
+  const base = { id: 'i', sourceUrl: 'u', title: 'T', author: 'A', language: 'en', html: '', selected: true, addedAt: 1 };
+  const ok = { ...base, kind: 'comic', images: ['https://a.example/1.jpg'] };
+  const merged = { ...base, id: 'm', kind: 'merged', parts: [{ title: 'p', html: '', sourceUrl: 'u', images: ['https://a.example/1.jpg'] }] };
+  const s = fake({ 'kf.queue': [ok, { ...base, id: 'x', kind: 'comic' }, { ...base, id: 'y', kind: 'comic', images: [] }, { ...base, id: 'z', kind: 'comic', images: [1] }, merged] });
+  expect((await loadQueue(s)).map((i) => i.id)).toEqual(['i', 'm']);
+});

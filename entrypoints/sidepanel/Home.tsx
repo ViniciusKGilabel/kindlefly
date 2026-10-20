@@ -156,7 +156,7 @@ export default function Home() {
 
   // Já sanitizado por htmlToChapter (sem scripts, handlers nem iframes): só então vai para o DOM.
   const previewHtml = useMemo(
-    () => (focused && focused.kind !== 'merged' ? previewBody(htmlToChapter(focused.html, { id: 'c1', title: focused.title })) : ''),
+    () => (focused && focused.kind !== 'merged' && focused.kind !== 'comic' ? previewBody(htmlToChapter(focused.html, { id: 'c1', title: focused.title })) : ''),
     [focused?.id, focused?.html, focused?.title, focused?.kind],
   );
 
@@ -312,6 +312,8 @@ export default function Home() {
                 <li key={i}>{p.title}</li>
               ))}
             </ol>
+          ) : focused.kind === 'comic' ? (
+            <p className="preview">{t('comicPages', [String(focused.images?.length ?? 0)])}</p>
           ) : (
             <article className="preview" onClick={onPreviewClick} dangerouslySetInnerHTML={{ __html: previewHtml }} />
           )}
