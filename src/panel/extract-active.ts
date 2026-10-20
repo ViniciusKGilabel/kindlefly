@@ -52,3 +52,13 @@ export function errorMessage(
   console.warn('[kindlefly]', 'unexpected', e instanceof Error ? e.message : String(e));
   return t('error_gmail_error');
 }
+
+/** URL da aba ativa (para reconhecer números de capítulo); undefined se indisponível. */
+export async function activeTabUrl(): Promise<string | undefined> {
+  try {
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    return tab?.url;
+  } catch {
+    return undefined;
+  }
+}

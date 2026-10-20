@@ -136,5 +136,38 @@
   },
   "selectItem": {
     "message": "Selecionar $1"
+  },
+  "rangeLabel": {
+    "message": "Capítulos"
+  },
+  "rangeFrom": {
+    "message": "de"
+  },
+  "rangeTo": {
+    "message": "até"
+  },
+  "rangeAdd": {
+    "message": "Adicionar capítulos"
+  },
+  "rangeCancel": {
+    "message": "Cancelar"
+  },
+  "rangeFetching": {
+    "message": "Buscando $1 de $2…"
+  },
+  "rangeInvalid": {
+    "message": "Informe números inteiros, com \"de\" menor ou igual a \"até\"."
+  },
+  "rangeTooMany": {
+    "message": "No máximo $1 capítulos por vez."
+  },
+  "rangeSummaryOk": {
+    "message": "$1 adicionados, $2 já estavam na lista."
+  },
+  "rangeSummaryFailed": {
+    "message": "$1 adicionados, $2 já estavam na lista, $3 não encontrados ($4)."
+  },
+  "rangeCancelled": {
+    "message": "Cancelado."
   }
 }

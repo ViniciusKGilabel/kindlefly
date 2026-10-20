@@ -136,5 +136,38 @@
   },
   "selectItem": {
     "message": "Select $1"
+  },
+  "rangeLabel": {
+    "message": "Chapters"
+  },
+  "rangeFrom": {
+    "message": "from"
+  },
+  "rangeTo": {
+    "message": "to"
+  },
+  "rangeAdd": {
+    "message": "Add chapters"
+  },
+  "rangeCancel": {
+    "message": "Cancel"
+  },
+  "rangeFetching": {
+    "message": "Fetching $1 of $2…"
+  },
+  "rangeInvalid": {
+    "message": "Enter whole numbers, with \"from\" less than or equal to \"to\"."
+  },
+  "rangeTooMany": {
+    "message": "At most $1 chapters at a time."
+  },
+  "rangeSummaryOk": {
+    "message": "$1 added, $2 already in the list."
+  },
+  "rangeSummaryFailed": {
+    "message": "$1 added, $2 already in the list, $3 not found ($4)."
+  },
+  "rangeCancelled": {
+    "message": "Cancelled."
   }
 }

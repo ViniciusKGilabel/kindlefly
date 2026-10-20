@@ -3,7 +3,7 @@ import { createGoogleAuth } from '../../src/auth/google';
 import { t } from '../../src/core/i18n';
 import type { EpubFile } from '../../src/core/types';
 import { KfError } from '../../src/core/errors';
-import { errorMessage, extractActiveTab } from '../../src/panel/extract-active';
+import { activeTabUrl, errorMessage, extractActiveTab } from '../../src/panel/extract-active';
 import { itemsToEpubs } from '../../src/panel/pipeline';
 import { htmlToChapter } from '../../src/extract/to-chapter';
 import {
@@ -13,6 +13,8 @@ import { createDebouncedSaver } from '../../src/queue/debounce';
 import { loadQueue, saveQueue } from '../../src/queue/store';
 import { sendToKindle } from '../../src/send/gmail';
 import { getKindleAddress } from '../../src/settings/store';
+import { parseChapterUrl, type ChapterUrl } from '../../src/range/chapter-url';
+import ChapterRange from './ChapterRange';
 import QueueList from './QueueList';
 
 type Status =
@@ -70,6 +72,8 @@ export default function Home() {
   const [kindle, setKindle] = useState<string | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [chapter, setChapter] = useState<ChapterUrl | null>(null);
+  const [ranging, setRanging] = useState(false);
   const saverRef = useRef<ReturnType<typeof createDebouncedSaver<QueueItem[]>> | null>(null);
   if (!saverRef.current) {
     saverRef.current = createDebouncedSaver<QueueItem[]>(
@@ -88,7 +92,19 @@ export default function Home() {
     else saver.current.saveNow(q);
   }
 
+  async function refreshChapter() {
+    const c = parseChapterUrl(await activeTabUrl());
+    setChapter((prev) => (prev && c && prev.base === c.base && prev.prefix === c.prefix && prev.number === c.number ? prev : c));
+  }
+
+  function addRangeItem(item: Parameters<typeof addItem>[1]): 'added' | 'duplicate' {
+    const res = addItem(queueRef.current, item, Date.now(), crypto.randomUUID());
+    commit(res.queue);
+    return res.duplicate ? 'duplicate' : 'added';
+  }
+
   async function addActiveTab() {
+    void refreshChapter();
     setStatus({ s: 'extracting' });
     try {
       const r = await extractActiveTab();
@@ -109,6 +125,7 @@ export default function Home() {
       setQueue(saved);
       setReady(true);
       void getKindleAddress().then(setKindle, () => setKindle(null));
+      void refreshChapter();
       void auth.connectedEmail().then(setAccount, () => setAccount(null));
       if (!autoAdded) {
         autoAdded = true;
@@ -131,7 +148,7 @@ export default function Home() {
   const selected = selectedItems(queue);
   const n = selected.length;
   const focused = queue.find((i) => i.id === focusedId) ?? null;
-  const busy = status.s === 'extracting' || status.s === 'sending';
+  const busy = status.s === 'extracting' || status.s === 'sending' || ranging;
   const sendHint = !kindle ? t('hintNeedKindle') : !account ? t('hintNeedAccount') : null;
 
   // Já sanitizado por htmlToChapter (sem scripts, handlers nem iframes): só então vai para o DOM.
@@ -181,6 +198,15 @@ export default function Home() {
       <button type="button" className="primary" onClick={addActiveTab} disabled={busy || !ready}>
         {t('addToList')}
       </button>
+
+      {chapter && (
+        <ChapterRange
+          chapter={chapter}
+          disabled={busy || !ready}
+          onItem={addRangeItem}
+          onRunningChange={setRanging}
+        />
+      )}
 
       {status.s === 'extracting' && <p role="status">{t('extracting')}</p>}
       {status.s === 'sending' && <p role="status">{t('sending')}</p>}
