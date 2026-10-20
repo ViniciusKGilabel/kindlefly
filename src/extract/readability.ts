@@ -12,14 +12,25 @@ function hostnameOf(url: string): string {
   }
 }
 
+/** Remove sufixo " | Site", " - Site" ou " – Site" (sem diferenciar maiúsculas). */
+function stripSiteName(title: string, site: string): string {
+  if (!site) return title;
+  const esc = site.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return title.replace(new RegExp(`\\s+[|\\-–—]\\s+${esc}\\s*$`, 'i'), '').trim() || title;
+}
+
 export function extractFromDocument(doc: Document, url: string): Omit<ExtractedItem, 'id'> {
   const language = doc.documentElement.getAttribute('lang')?.trim() || 'en';
   const host = hostnameOf(url);
   const images = extractComicImages(doc);
   if (images) {
+    const siteName =
+      doc.querySelector('meta[property="og:site_name"]')?.getAttribute('content')?.trim() ||
+      doc.querySelector('meta[name="application-name"]')?.getAttribute('content')?.trim() ||
+      '';
     return {
       sourceUrl: url,
-      title: cleanTitle(doc.title?.trim() ?? '') || host,
+      title: cleanTitle(stripSiteName(doc.title?.trim() ?? '', siteName)) || host,
       author:
         doc.querySelector('meta[name="author"]')?.getAttribute('content')?.trim() ||
         doc.querySelector('meta[property="og:site_name"]')?.getAttribute('content')?.trim() ||
