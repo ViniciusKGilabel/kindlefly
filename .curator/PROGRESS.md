@@ -12,6 +12,7 @@
 
 ## Concluído
 
+- [x] 2026-10-19 T-0008 intervalo de capítulos (light novel) adicionado à lista (165 testes; testado em Chromium com servidor sintético)
 - [x] 2026-10-19 T-0007 lista persistente com seleção, baixar/enviar vários (146 testes; testado em Chromium)
 - [x] 2026-10-19 checkpoint: login Google e envio para o Kindle funcionaram com a conta do dono
 
