@@ -22,7 +22,7 @@ function isAbort(e: unknown): boolean {
 /** O valor de alt vem escapado do XMLSerializer: passa direto (só normaliza espaços/quebras). */
 function altOf(tag: string): string {
   const m = /\salt="([^"]*)"/.exec(tag);
-  return (m?.[1] ?? '').replace(/\s+/g, ' ').trim();
+  return (m?.[1] ?? '').replace(/&#x(?:A|D|9);/gi, ' ').replace(/\s+/g, ' ').trim();
 }
 
 /**
