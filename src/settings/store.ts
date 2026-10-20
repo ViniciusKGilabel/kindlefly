@@ -25,3 +25,17 @@ export async function setKindleAddress(v: string, storage?: KvStorage): Promise<
   const s = storage ?? (await defaultStorage());
   await s.set({ [KEY]: n });
 }
+
+const GRAY_KEY = 'kf.grayscale';
+
+/** Imagens em tons de cinza; padrão true quando nunca definido. */
+export async function getGrayscale(storage?: KvStorage): Promise<boolean> {
+  const s = storage ?? (await defaultStorage());
+  const v = (await s.get(GRAY_KEY))[GRAY_KEY];
+  return typeof v === 'boolean' ? v : true;
+}
+
+export async function setGrayscale(v: boolean, storage?: KvStorage): Promise<void> {
+  const s = storage ?? (await defaultStorage());
+  await s.set({ [GRAY_KEY]: v });
+}

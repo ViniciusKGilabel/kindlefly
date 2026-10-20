@@ -2,6 +2,10 @@
 export const IMAGE_MAX_WIDTH = 1236;
 /** Proporção de uma página do Kindle (altura / largura). */
 export const PAGE_ASPECT = 1648 / 1236;
+/** Downloads de imagem simultâneos (usado pelo painel, Task 3). */
+export const IMAGE_CONCURRENCY = 4;
+/** Tamanho máximo de uma imagem baixada, em bytes (20 MB). */
+export const IMAGE_MAX_BYTES = 20 * 1024 * 1024;
 /** Qualidade do JPEG gerado. */
 export const JPEG_QUALITY = 0.8;
 
@@ -43,6 +47,8 @@ export function isBlankRow(luma: Uint8ClampedArray | number[]): boolean {
  * Intervalos [início, fim) para cortar uma tira em páginas do Kindle.
  * Cada corte fica em y0 + P, ou na faixa lisa mais próxima dele entre
  * y0 + 0.75P e y0 + P.
+ * `height`/`width` são as dimensões ESCALADAS (resultado de targetSize) e
+ * `blankRows` deve ser avaliada na imagem escalada.
  */
 export function sliceRanges(
   height: number,

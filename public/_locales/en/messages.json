@@ -32,11 +32,17 @@
   "error_extract_failed": {
     "message": "Could not extract the content of this page."
   },
+  "error_image_failed": {
+    "message": "Could not download or convert an image."
+  },
   "settings": {
     "message": "Settings"
   },
   "back": {
     "message": "Back"
+  },
+  "grayscaleImages": {
+    "message": "Grayscale images"
   },
   "kindleAddressLabel": {
     "message": "Kindle address"

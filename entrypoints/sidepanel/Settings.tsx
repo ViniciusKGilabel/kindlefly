@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { createGoogleAuth } from '../../src/auth/google';
 import { t } from '../../src/core/i18n';
 import { errorMessage } from '../../src/panel/extract-active';
-import { getKindleAddress, setKindleAddress } from '../../src/settings/store';
+import { getGrayscale, getKindleAddress, setGrayscale, setKindleAddress } from '../../src/settings/store';
 
 export default function Settings() {
   const auth = useMemo(() => createGoogleAuth(), []);
   const [address, setAddress] = useState('');
+  const [gray, setGray] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -14,6 +15,7 @@ export default function Settings() {
 
   useEffect(() => {
     void getKindleAddress().then((a) => setAddress(a ?? ''));
+    void getGrayscale().then(setGray);
     void auth.connectedEmail().then(setEmail);
   }, [auth]);
 
@@ -84,6 +86,19 @@ export default function Settings() {
         </button>
       </div>
       <p className="hint">{t('amazonReminder')}</p>
+
+      <label className="row" htmlFor="gray">
+        <input
+          id="gray"
+          type="checkbox"
+          checked={gray}
+          onChange={(e) => {
+            setGray(e.target.checked);
+            void setGrayscale(e.target.checked);
+          }}
+        />
+        {t('grayscaleImages')}
+      </label>
       {msg && (
         <p className={msg.kind === 'error' ? 'error' : 'ok'} role="status">
           {msg.text}

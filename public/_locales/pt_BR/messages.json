@@ -32,11 +32,17 @@
   "error_extract_failed": {
     "message": "Não foi possível extrair o conteúdo desta página."
   },
+  "error_image_failed": {
+    "message": "Não foi possível baixar ou converter uma imagem."
+  },
   "settings": {
     "message": "Configurações"
   },
   "back": {
     "message": "Voltar"
+  },
+  "grayscaleImages": {
+    "message": "Imagens em tons de cinza"
   },
   "kindleAddressLabel": {
     "message": "Endereço do Kindle"
