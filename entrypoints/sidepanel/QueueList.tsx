@@ -10,9 +10,10 @@ interface Props {
   onToggleAll: (selected: boolean) => void;
   onRemove: (id: string) => void;
   onClear: () => void;
+  onMerge: () => void;
 }
 
-export default function QueueList({ queue, focusedId, onFocus, onToggle, onToggleAll, onRemove, onClear }: Props) {
+export default function QueueList({ queue, focusedId, onFocus, onToggle, onToggleAll, onRemove, onClear, onMerge }: Props) {
   const allRef = useRef<HTMLInputElement>(null);
   const count = queue.filter((i) => i.selected).length;
   useEffect(() => {
@@ -27,6 +28,9 @@ export default function QueueList({ queue, focusedId, onFocus, onToggle, onToggl
           <input ref={allRef} type="checkbox" checked={allSelected} onChange={(e) => onToggleAll(e.target.checked)} />
           {t('selectAll')}
         </label>
+        <button type="button" onClick={onMerge} disabled={count < 2}>
+          {t('mergeSelected')}
+        </button>
         <button type="button" onClick={onClear}>
           {t('clearList')}
         </button>

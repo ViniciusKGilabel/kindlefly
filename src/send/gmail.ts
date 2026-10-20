@@ -1,7 +1,7 @@
 import type { GoogleAuth } from '../auth/google';
 import { KfError } from '../core/errors';
 import type { EpubFile } from '../core/types';
-import { groupForEmails } from './batch';
+import { EMAIL_DELAY_MS, groupForEmails } from './batch';
 import { buildMimeMessage } from './mime';
 
 const SEND_URL = 'https://gmail.googleapis.com/upload/gmail/v1/users/me/messages/send?uploadType=media';
@@ -48,7 +48,10 @@ export async function sendWithRetry(
 
 export async function sendToKindle(
   files: EpubFile[],
-  d: { auth: AuthLike; kindleAddress: string | null; fetchFn: typeof fetch; subject: string },
+  d: { auth: AuthLike; kindleAddress: string | null; fetchFn: typeof fetch; subject: string;
+    sleep?: (ms: number) => Promise<void>;
+    onProgress?: (sent: number, total: number) => void;
+  },
 ): Promise<{ emailsSent: number; tooLarge: string[] }> {
   if (!d.kindleAddress || !d.kindleAddress.trim()) throw new KfError('kindle_address_missing');
   if (!isKindleAddress(d.kindleAddress)) throw new KfError('kindle_address_invalid');
@@ -59,10 +62,13 @@ export async function sendToKindle(
   const { groups, tooLarge } = groupForEmails(files.map((f) => ({ size: f.data.length })));
   const tooLargeNames = tooLarge.map((i) => files[i]!.filename);
   let emailsSent = 0;
+  const sleep = d.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   for (const g of groups) {
+    if (emailsSent > 0) await sleep(EMAIL_DELAY_MS);
     const raw = buildMimeMessage({ from, to, subject: d.subject, attachments: g.map((i) => files[i]!) });
     await sendWithRetry(raw, d.auth, d.fetchFn);
     emailsSent++;
+    d.onProgress?.(emailsSent, groups.length);
   }
   return { emailsSent, tooLarge: tooLargeNames };
 }

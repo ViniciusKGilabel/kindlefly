@@ -13,9 +13,9 @@ test('3 arquivos de 10 MB → 3 e-mails', () => {
 test('3 arquivos de 5 MB → 1 e-mail', () => {
   expect(groupForEmails([{ size: 5 * MB }, { size: 5 * MB }, { size: 5 * MB }]).groups).toEqual([[0, 1, 2]]);
 });
-test('30 pequenos → 25 e 5', () => {
+test('30 pequenos → 10/10/10', () => {
   const r = groupForEmails(Array.from({ length: 30 }, () => ({ size: 1000 })));
-  expect(r.groups.map((g) => g.length)).toEqual([25, 5]);
+  expect(r.groups.map((g) => g.length)).toEqual([10, 10, 10]);
 });
 test('20 MB → tooLarge', () => {
   expect(groupForEmails([{ size: 20 * MB }, { size: 1000 }])).toEqual({ groups: [[1]], tooLarge: [0] });

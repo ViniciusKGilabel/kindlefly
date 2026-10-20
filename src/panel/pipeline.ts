@@ -6,11 +6,15 @@ import { htmlToChapter } from '../extract/to-chapter';
 
 /** Monta um livro de 1 capítulo a partir do item extraído (com título/autor editados) e gera o EPUB. */
 export async function itemToEpub(
-  item: ExtractedItem,
+  item: ExtractedItem & { parts?: QueueItem['parts'] },
   edits: { title: string; author: string },
 ): Promise<EpubFile> {
-  const chapter = htmlToChapter(item.html, { id: 'c1', title: edits.title.trim() || item.title });
-  const title = edits.title.trim() || chapter.title.trim() || 'kindlefly';
+  const itemTitle = edits.title.trim() || item.title;
+  const chapters =
+    item.kind === 'merged' && item.parts
+      ? item.parts.map((p, i) => htmlToChapter(p.html, { id: 'c' + (i + 1), title: p.title }))
+      : [htmlToChapter(item.html, { id: 'c1', title: itemTitle })];
+  const title = edits.title.trim() || chapters[0]!.title.trim() || 'kindlefly';
   const author = edits.author.trim() || item.author.trim() || 'kindlefly';
   const book: Book = {
     title,
@@ -18,7 +22,7 @@ export async function itemToEpub(
     language: item.language || 'en',
     identifier: 'urn:uuid:' + crypto.randomUUID(),
     modified: new Date(),
-    chapters: [chapter],
+    chapters,
     images: [],
   };
   return { filename: sanitizeFilename(title) + '.epub', data: await buildEpub(book) };

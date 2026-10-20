@@ -169,5 +169,11 @@
   },
   "rangeCancelled": {
     "message": "Cancelado."
+  },
+  "mergeSelected": {
+    "message": "Unir seleccionados"
+  },
+  "sendingProgress": {
+    "message": "Enviando correo $1 de $2…"
   }
 }

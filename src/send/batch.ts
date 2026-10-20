@@ -1,5 +1,6 @@
 export const GMAIL_MAX_MESSAGE_BYTES = 25 * 1024 * 1024;
-export const KINDLE_MAX_ATTACHMENTS = 25;
+export const KINDLE_MAX_ATTACHMENTS = 10;
+export const EMAIL_DELAY_MS = 5000;
 
 // Headers + part headers; generous so that long RFC 2231-folded filenames
 // (up to ~120 emoji, twice) are always covered.

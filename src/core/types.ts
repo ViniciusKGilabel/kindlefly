@@ -5,7 +5,7 @@ export interface ExtractedItem {
   author: string; // byline || siteName || hostname
   language: string; // lang do documento || 'en'
   html: string; // conteúdo do Readability
-  kind: 'article' | 'selection';
+  kind: 'article' | 'selection' | 'merged';
 }
 export interface Heading {
   level: 1 | 2 | 3 | 4 | 5 | 6;

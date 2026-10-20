@@ -26,3 +26,15 @@ test('corrompido → []', async () => {
   expect(await loadQueue(fake({ 'kf.queue': 'lixo' }))).toEqual([]);
   expect(await loadQueue(fake({ 'kf.queue': [{ foo: 1 }, null] }))).toEqual([]);
 });
+
+test('item merged com parts sobrevive ao load', async () => {
+  const s = fake();
+  const q = [{ id: 'm', sourceUrl: 'merged:m', title: 'T', author: 'A', language: 'en', html: '', kind: 'merged' as const,
+    parts: [{ title: 'c', html: '<p>x</p>', sourceUrl: 'u' }], selected: true, addedAt: 1 }];
+  await saveQueue(q, s);
+  expect(await loadQueue(s)).toEqual(q);
+});
+test('parts malformadas → item descartado', async () => {
+  const bad = { id: 'm', sourceUrl: 'merged:m', title: 'T', author: 'A', language: 'en', html: '', kind: 'merged', parts: [{ title: 1 }], selected: true, addedAt: 1 };
+  expect(await loadQueue(fake({ 'kf.queue': [bad] }))).toEqual([]);
+});

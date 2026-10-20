@@ -69,3 +69,26 @@ test('itemsToEpubs: títulos iguais ganham sufixo e usa título editado do item'
   const opf = await (await JSZip.loadAsync(files[3]!.data)).file('OEBPS/content.opf')!.async('string');
   expect(opf).toContain('<dc:title>Editado</dc:title>');
 });
+
+test('itemsToEpubs: item merged → 1 arquivo, N capítulos no nav', async () => {
+  const merged = {
+    ...item, id: 'm', kind: 'merged' as const, html: '', sourceUrl: 'merged:m', title: 'Livro 1–2', selected: true, addedAt: 1,
+    parts: [
+      { title: 'Cap Um', html: '<p>um</p>', sourceUrl: 'u1' },
+      { title: 'Cap Dois', html: '<p>dois</p>', sourceUrl: 'u2' },
+    ],
+  };
+  const files = await itemsToEpubs([merged]);
+  expect(files).toHaveLength(1);
+  expect(files[0]!.filename).toBe('Livro 1–2.epub');
+  const zip = await JSZip.loadAsync(files[0]!.data);
+  const nav = await zip.file('OEBPS/nav.xhtml')!.async('string');
+  expect(nav).toContain('Cap Um');
+  expect(nav).toContain('Cap Dois');
+  if (hasJava) {
+    const p = join(mkdtempSync(join(tmpdir(), 'kf-')), 'a.epub');
+    writeFileSync(p, files[0]!.data);
+    const r = spawnSync('node', ['scripts/epubcheck.mjs', p], { encoding: 'utf8' });
+    expect(r.stdout + r.stderr).toContain('No errors or warnings detected');
+  }
+}, 120_000);

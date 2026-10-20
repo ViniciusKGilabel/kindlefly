@@ -45,3 +45,9 @@ test('página sem artigo → KfError extract_failed', () => {
     expect((e as KfError).code).toBe('extract_failed');
   }
 });
+
+test('título sem sufixo Read Online', () => {
+  const doc = new DOMParser().parseFromString(
+    '<html><head><title>Shadow Slave Chapter 450 - Read Online</title></head><body><article><h1>Shadow Slave Chapter 450 - Read Online</h1><p>' + 'texto longo '.repeat(80) + '</p></article></body></html>', 'text/html');
+  expect(extractFromDocument(doc, 'https://x.com/a').title).toBe('Shadow Slave Chapter 450');
+});

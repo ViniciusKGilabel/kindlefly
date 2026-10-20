@@ -9,6 +9,7 @@ import { htmlToChapter } from '../../src/extract/to-chapter';
 import {
   addItem, removeItem, selectedItems, setAllSelected, setSelected, updateMeta, type QueueItem,
 } from '../../src/queue/queue';
+import { mergeItems } from '../../src/queue/merge';
 import { createDebouncedSaver } from '../../src/queue/debounce';
 import { loadQueue, saveQueue } from '../../src/queue/store';
 import { sendToKindle } from '../../src/send/gmail';
@@ -20,7 +21,7 @@ import QueueList from './QueueList';
 type Status =
   | { s: 'idle' }
   | { s: 'extracting' }
-  | { s: 'sending' }
+  | { s: 'sending'; sent?: number; total?: number }
   | { s: 'sent'; count: number; to: string }
   | { s: 'info'; text: string }
   | { s: 'error'; text: string };
@@ -153,9 +154,17 @@ export default function Home() {
 
   // Já sanitizado por htmlToChapter (sem scripts, handlers nem iframes): só então vai para o DOM.
   const previewHtml = useMemo(
-    () => (focused ? htmlToChapter(focused.html, { id: 'c1', title: focused.title }).xhtmlBody : ''),
-    [focused?.id, focused?.html, focused?.title],
+    () => (focused && focused.kind !== 'merged' ? htmlToChapter(focused.html, { id: 'c1', title: focused.title }).xhtmlBody : ''),
+    [focused?.id, focused?.html, focused?.title, focused?.kind],
   );
+
+  function onMerge() {
+    const sel = selectedItems(queueRef.current);
+    if (sel.length < 2) return;
+    const merged = mergeItems(sel, crypto.randomUUID(), Date.now());
+    commit([...queueRef.current.map((i) => (i.selected ? { ...i, selected: false } : i)), merged]);
+    setFocusedId(merged.id);
+  }
 
   async function onDownload() {
     await saver.current.flush();
@@ -181,6 +190,7 @@ export default function Home() {
         auth,
         kindleAddress,
         fetchFn: (...a) => fetch(...a),
+        onProgress: (sent, total) => setStatus({ s: 'sending', sent, total }),
         subject: items.length === 1 ? items[0]!.title : 'kindlefly',
       });
       if (r.tooLarge.length > 0) {
@@ -209,7 +219,13 @@ export default function Home() {
       )}
 
       {status.s === 'extracting' && <p role="status">{t('extracting')}</p>}
-      {status.s === 'sending' && <p role="status">{t('sending')}</p>}
+      {status.s === 'sending' && (
+        <p role="status">
+          {status.sent !== undefined && status.total !== undefined && status.sent < status.total
+            ? t('sendingProgress', [String(status.sent + 1), String(status.total)])
+            : t('sending')}
+        </p>
+      )}
       {status.s === 'sent' && (
         <p className="ok" role="status">
           {t('sentCount', [String(status.count), status.to])}
@@ -237,6 +253,7 @@ export default function Home() {
           commit(removeItem(queueRef.current, id));
           if (id === focusedId) setFocusedId(null);
         }}
+        onMerge={onMerge}
         onClear={() => {
           commit([]);
           setFocusedId(null);
@@ -269,7 +286,15 @@ export default function Home() {
             onChange={(e) => commit(updateMeta(queueRef.current, focused.id, { author: e.target.value }), true)}
           />
           <h2>{t('previewLabel')}</h2>
-          <article className="preview" onClick={onPreviewClick} dangerouslySetInnerHTML={{ __html: previewHtml }} />
+          {focused.kind === 'merged' ? (
+            <ol className="preview">
+              {(focused.parts ?? []).map((p, i) => (
+                <li key={i}>{p.title}</li>
+              ))}
+            </ol>
+          ) : (
+            <article className="preview" onClick={onPreviewClick} dangerouslySetInnerHTML={{ __html: previewHtml }} />
+          )}
         </>
       )}
     </section>

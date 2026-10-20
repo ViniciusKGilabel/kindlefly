@@ -1,5 +1,6 @@
 import { Readability } from '@mozilla/readability';
 import { KfError } from '../core/errors';
+import { cleanTitle } from './clean-title';
 import type { ExtractedItem } from '../core/types';
 
 function hostnameOf(url: string): string {
@@ -17,7 +18,7 @@ export function extractFromDocument(doc: Document, url: string): Omit<ExtractedI
   const host = hostnameOf(url);
   return {
     sourceUrl: url,
-    title: article.title?.trim() || host,
+    title: cleanTitle(article.title?.trim() ?? '') || host,
     author: article.byline?.trim() || article.siteName?.trim() || host,
     language,
     html: article.content,

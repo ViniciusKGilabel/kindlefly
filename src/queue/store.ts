@@ -8,6 +8,12 @@ async function defaultStorage(): Promise<KvStorage> {
   return browser.storage.local as unknown as KvStorage;
 }
 
+function isPart(x: unknown): boolean {
+  if (!x || typeof x !== 'object') return false;
+  const o = x as Record<string, unknown>;
+  return typeof o.title === 'string' && typeof o.html === 'string' && typeof o.sourceUrl === 'string';
+}
+
 function isItem(x: unknown): x is QueueItem {
   if (!x || typeof x !== 'object') return false;
   const o = x as Record<string, unknown>;
@@ -19,7 +25,8 @@ function isItem(x: unknown): x is QueueItem {
     typeof o.language === 'string' &&
     typeof o.html === 'string' &&
     typeof o.selected === 'boolean' &&
-    typeof o.addedAt === 'number'
+    typeof o.addedAt === 'number' &&
+    (o.parts === undefined || (Array.isArray(o.parts) && o.parts.every(isPart)))
   );
 }
 

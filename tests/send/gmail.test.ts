@@ -86,3 +86,20 @@ describe('sendRawMessage', () => {
     expect(await code(sendRawMessage('raw', 't', fetchFn))).toBe('network');
   });
 });
+
+describe('sendToKindle: ritmo e progresso', () => {
+  const big = () => Array.from({ length: 3 }, (_, i) => file(`f${i}.epub`, 10 * 1024 * 1024));
+  test('sleep 5000 entre e-mails (2 vezes para 3) e progresso', async () => {
+    const sleep = vi.fn(async () => {});
+    const onProgress = vi.fn();
+    const r = await sendToKindle(big(), { auth: fakeAuth(), kindleAddress: 'a@kindle.com', fetchFn: vi.fn(async () => ok()), subject: 's', sleep, onProgress });
+    expect(r.emailsSent).toBe(3);
+    expect(sleep.mock.calls).toEqual([[5000], [5000]]);
+    expect(onProgress.mock.calls).toEqual([[1, 3], [2, 3], [3, 3]]);
+  });
+  test('um e-mail: sem sleep', async () => {
+    const sleep = vi.fn(async () => {});
+    await sendToKindle([file()], { auth: fakeAuth(), kindleAddress: 'a@kindle.com', fetchFn: vi.fn(async () => ok()), subject: 's', sleep });
+    expect(sleep).not.toHaveBeenCalled();
+  });
+});
