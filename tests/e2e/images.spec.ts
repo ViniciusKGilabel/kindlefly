@@ -103,7 +103,7 @@ async function openPanel(ctx: BrowserContext, url: string): Promise<{ content: P
   return { content, panel };
 }
 
-async function downloadAll(panel: Page, name: string): Promise<string[]> {
+async function downloadAll(panel: Page, name: string, expected = 1): Promise<string[]> {
   const files: string[] = [];
   const onDl = async (d: import('@playwright/test').Download) => {
     const out = join(tmp, `${name}-${files.length}-${d.suggestedFilename()}`);
@@ -112,8 +112,9 @@ async function downloadAll(panel: Page, name: string): Promise<string[]> {
   };
   panel.on('download', onDl);
   await panel.getByTestId('download').click();
-  await expect.poll(() => files.length, { timeout: 60_000 }).toBeGreaterThan(0);
-  await panel.waitForTimeout(500);
+  // painel ocioso de novo (botão reabilitado) = todos os downloads disparados
+  await expect(panel.getByTestId('download')).toBeEnabled({ timeout: 60_000 });
+  await expect.poll(() => files.length, { timeout: 60_000 }).toBe(expected);
   panel.off('download', onDl);
   return files;
 }
@@ -146,6 +147,9 @@ async function inspectJpegs(blobs: Buffer[]) {
   }
 }
 
+let articleEpub = '';
+let comicEpub = '';
+
 function epubcheck(file: string) {
   const r = spawnSync('node', ['scripts/epubcheck.mjs', file], { encoding: 'utf8' });
   expect(r.status, r.stdout + r.stderr).toBe(0);
@@ -175,7 +179,7 @@ test('artigo: imagens normal + lazy, 404 removida, só JPEG, fundo branco', asyn
     await expect(panel.getByRole('button', { name: 'Artigo com Imagens' }).first()).toBeVisible();
     const files = await downloadAll(panel, 'article');
     expect(files).toHaveLength(1);
-    await expect(panel.getByTestId('notice')).toContainText(/^1 /);
+    await expect(panel.getByTestId('notice')).toHaveText('1 imagem(ns) não puderam ser incluídas');
 
     const z = await zipOf(files[0]!);
     const names = Object.keys(z.files);
@@ -198,8 +202,7 @@ test('artigo: imagens normal + lazy, 404 removida, só JPEG, fundo branco', asyn
     const photo = jpgs.find((j) => j.w === 1236)!;
     expect(photo, JSON.stringify(jpgs)).toBeTruthy();
 
-    if (hasJava) epubcheck(files[0]!);
-    else test.info().annotations.push({ type: 'skip', description: 'java ausente: epubcheck pulado' });
+    articleEpub = files[0]!;
   } finally {
     await ctx.close();
   }
@@ -223,23 +226,48 @@ test('quadrinho: intervalo 1..3, juntar, tira cortada em fatias, logo fora', asy
     const names = Object.keys(z.files);
     const chapters = names.filter((f) => /chapters\/c\d+\.xhtml$/.test(f));
     expect(chapters).toHaveLength(3);
-    let pages = 0;
-    for (const c of chapters) pages += ((await z.file(c)!.async('string')).match(/class="kf-page"/g) ?? []).length;
-
     const opf = await z.file('OEBPS/content.opf')!.async('string');
     expect([...new Set(opf.match(/media-type="image\/[a-z+]+"/g))]).toEqual(['media-type="image/jpeg"']);
 
-    const jpgs = await inspectJpegs(await jpgsOf(z));
-    // cada capítulo: 2 páginas normais + tira em >= 13 fatias (16000/1200); logo ausente
-    expect(pages).toBeGreaterThanOrEqual(3 * (2 + 13));
-    expect(jpgs.length).toBeGreaterThanOrEqual(pages);
-    expect(jpgs.some((j) => j.w === 200)).toBe(false); // logo
-    const maxH = 1.25 * Math.round(900 * PAGE_ASPECT);
-    expect(jpgs.filter((j) => j.w === 900).length).toBeGreaterThanOrEqual(3 * (2 + 13));
-    for (const j of jpgs) expect(j.h, JSON.stringify(j)).toBeLessThanOrEqual(maxH);
+    const dims = new Map<string, { w: number; h: number }>();
+    const jpgNames = names.filter((f) => /\.jpe?g$/i.test(f));
+    const info = await inspectJpegs(await Promise.all(jpgNames.map(async (n) => Buffer.from(await z.file(n)!.async('uint8array')))));
+    jpgNames.forEach((n, k) => dims.set(n.split('/').pop()!, info[k]!));
+    expect(info.some((j) => j.w === 200)).toBe(false); // logo fora
 
-    if (hasJava) epubcheck(files[0]!);
+    const maxH = 1.25 * Math.round(900 * PAGE_ASPECT);
+    for (const c of chapters) {
+      const xhtml = await z.file(c)!.async('string');
+      const srcs = [...xhtml.matchAll(/<div class="kf-page"><img\b[^>]*\bsrc="\.\.\/images\/([^"]+)"/g)].map((m) => m[1]!);
+      // 2 páginas normais + >= 13 fatias da tira, na ordem de leitura
+      expect(srcs.length, c).toBeGreaterThanOrEqual(15);
+      expect(xhtml.match(/<img\b/g)?.length, c).toBe(srcs.length);
+      const d = srcs.map((n) => dims.get(n)!);
+      expect(d.every(Boolean), c).toBe(true);
+      expect(d[0], 'primeira página').toMatchObject({ w: 900, h: 1200 });
+      expect(d[d.length - 1], 'última página').toMatchObject({ w: 900, h: 1200 });
+      for (const j of d.slice(1, -1)) {
+        expect(j.w).toBe(900);
+        expect(j.h, JSON.stringify(j)).toBeLessThanOrEqual(maxH);
+      }
+      // as fatias preservam a altura total da tira (16000 px, sem perder linhas)
+      expect(d.slice(1, -1).reduce((a, j) => a + j.h, 0)).toBe(16000);
+    }
+
+    comicEpub = files[0]!;
   } finally {
     await ctx.close();
   }
+});
+
+test.describe('epubcheck', () => {
+  test.skip(!hasJava, 'java ausente: epubcheck pulado');
+  test('artigo', () => {
+    expect(articleEpub, 'o teste do artigo precisa rodar antes').not.toBe('');
+    epubcheck(articleEpub);
+  });
+  test('quadrinho', () => {
+    expect(comicEpub, 'o teste do quadrinho precisa rodar antes').not.toBe('');
+    epubcheck(comicEpub);
+  });
 });
