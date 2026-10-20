@@ -96,6 +96,23 @@ export function htmlToChapter(html: string, opts: { id: string; title: string })
   return { id: opts.id, title, xhtmlBody, headings, imageUrls };
 }
 
+function escText(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** Capítulo de quadrinho: `<h1>` + uma `div.kf-page` por imagem (marcador `kf-img:N`), para o embedImages. */
+export function comicToChapter(images: string[], opts: { id: string; title: string }): Chapter {
+  const title = opts.title.trim() || 'Untitled';
+  const pages = images.map((_, n) => `<div class="kf-page"><img src="kf-img:${n}" alt=""/></div>`).join('');
+  return {
+    id: opts.id,
+    title,
+    xhtmlBody: `<h1 id="h-1">${escText(title.replace(XML_FORBIDDEN, ''))}</h1>${pages}`,
+    headings: [{ level: 1, text: title.replace(/\s+/g, ' '), anchor: 'h-1' }],
+    imageUrls: [...images],
+  };
+}
+
 const MARKER_SRC = /(\bsrc=")kf-img:(\d+)(")/g;
 function escAttr(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');

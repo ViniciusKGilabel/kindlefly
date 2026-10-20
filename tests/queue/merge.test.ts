@@ -37,3 +37,11 @@ test('mergeItems: expande merged', () => {
   expect(m2.parts!.map((p) => p.title)).toEqual(['Ch 1', 'Ch 2', 'Ch 3']);
   expect(m2.title).toBe('Ch 1–3');
 });
+test('mergeItems: parte de quadrinho mantém images; artigo + quadrinho', () => {
+  const c = mk('c', 'Cap 2', { kind: 'comic', html: '', images: ['https://x/1.jpg', 'https://x/2.jpg'] });
+  const m = mergeItems([mk('a', 'Cap 1'), c], 'm', 1);
+  expect(m.parts![0]).not.toHaveProperty('images');
+  expect(m.parts![1]).toEqual({ title: 'Cap 2', html: '', sourceUrl: 'https://x/c', images: ['https://x/1.jpg', 'https://x/2.jpg'] });
+  const m2 = mergeItems([m, mk('d', 'Cap 3')], 'm2', 2);
+  expect(m2.parts![1]!.images).toHaveLength(2);
+});

@@ -15,6 +15,9 @@ export interface EmbedDeps {
 
 const IMG_MARKER = /<img\b[^>]*\bsrc=(["'])kf-img:(\d+)\1[^>]*>/g;
 
+/** Página de quadrinho: cada fatia vira sua própria `div.kf-page` (começa em página nova). */
+const PAGE_MARKER = /<div class="kf-page"><img\b[^>]*\bsrc=(["'])kf-img:(\d+)\1[^>]*><\/div>/g;
+
 function isAbort(e: unknown): boolean {
   return (e as { name?: string } | null)?.name === 'AbortError';
 }
@@ -84,7 +87,14 @@ export async function embedImages(
 
   const out = chapters.map((c) => {
     const local = c.imageUrls ?? [];
-    const xhtmlBody = c.xhtmlBody.replace(IMG_MARKER, (tag, _q: string, idx: string) => {
+    const filesOf = (idx: string): string[] | undefined => {
+      const url = local[Number(idx)];
+      return url === undefined ? undefined : keptOf.get(globalOf.get(url)!);
+    };
+    const withPages = c.xhtmlBody.replace(PAGE_MARKER, (_tag, _q: string, idx: string) =>
+      (filesOf(idx) ?? []).map((f) => `<div class="kf-page"><img src="../images/${f}" alt="" /></div>`).join(''),
+    );
+    const xhtmlBody = withPages.replace(IMG_MARKER, (tag, _q: string, idx: string) => {
       const url = local[Number(idx)];
       const files = url === undefined ? undefined : keptOf.get(globalOf.get(url)!);
       if (!files) return '';

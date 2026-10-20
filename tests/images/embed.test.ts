@@ -78,3 +78,19 @@ test('alt com quebra de linha e & sai válido e escapado uma vez', async () => {
   const r = await embedImages([ch('c1', body, ['https://x/a.jpg'])], base);
   expect(r.chapters[0]!.xhtmlBody).toContain('alt="a &amp; b c"');
 });
+
+describe('embedImages: páginas de quadrinho (kf-page)', () => {
+  const page = (n: number) => `<div class="kf-page"><img src="kf-img:${n}" alt=""/></div>`;
+  test('cada fatia vira sua própria div kf-page', async () => {
+    const r = await embedImages([ch('c1', page(0) + page(1), ['https://x/tall.jpg', 'https://x/a.jpg'])], base);
+    expect(r.chapters[0]!.xhtmlBody).toBe(
+      ['i0-0', 'i0-1', 'i0-2', 'i1-0'].map((f) => `<div class="kf-page"><img src="../images/${f}.jpg" alt="" /></div>`).join(''),
+    );
+  });
+  test('falha remove a div inteira', async () => {
+    const r = await embedImages([ch('c1', page(0) + page(1), ['https://x/bad.jpg', 'https://x/a.jpg'])], {
+      ...base, fetchImage: async (u: string) => { if (u.includes('bad')) throw new Error('x'); return new Blob([u]); },
+    });
+    expect(r.chapters[0]!.xhtmlBody).toBe('<div class="kf-page"><img src="../images/i1-0.jpg" alt="" /></div>');
+  });
+});

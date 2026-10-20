@@ -3,7 +3,7 @@ import { sanitizeFilename } from '../core/filename';
 import type { Book, EpubFile, ExtractedItem } from '../core/types';
 import type { QueueItem } from '../queue/queue';
 import { buildEpub } from '../epub/build';
-import { htmlToChapter } from '../extract/to-chapter';
+import { comicToChapter, htmlToChapter } from '../extract/to-chapter';
 import { embedImages, type EmbedDeps } from '../images/embed';
 import { getGrayscale } from '../settings/store';
 
@@ -42,10 +42,12 @@ async function buildItem(
   img: ImageOptions,
 ): Promise<{ file: EpubFile; failed: number }> {
   const itemTitle = edits.title.trim() || item.title;
+  const toChapter = (src: { html: string; images?: string[] }, id: string, title: string) =>
+    src.images ? comicToChapter(src.images, { id, title }) : htmlToChapter(src.html, { id, title });
   let chapters =
     item.kind === 'merged' && item.parts
-      ? item.parts.map((p, i) => htmlToChapter(p.html, { id: 'c' + (i + 1), title: p.title.trim() || chapterName(i + 1) }))
-      : [htmlToChapter(item.html, { id: 'c1', title: itemTitle })];
+      ? item.parts.map((p, i) => toChapter(p, 'c' + (i + 1), p.title.trim() || chapterName(i + 1)))
+      : [toChapter(item.kind === 'comic' ? item : { html: item.html }, 'c1', itemTitle)];
   let images: Book['images'] = [];
   let failed = 0;
   if (chapters.some((c) => (c.imageUrls?.length ?? 0) > 0)) {

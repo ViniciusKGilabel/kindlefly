@@ -309,11 +309,21 @@ export default function Home() {
           {focused.kind === 'merged' ? (
             <ol className="preview">
               {(focused.parts ?? []).map((p, i) => (
-                <li key={i}>{p.title}</li>
+                <li key={i}>{p.images ? `${p.title} (${t('comicPages', [String(p.images.length)])})` : p.title}</li>
               ))}
             </ol>
           ) : focused.kind === 'comic' ? (
-            <p className="preview">{t('comicPages', [String(focused.images?.length ?? 0)])}</p>
+            <div className="preview">
+              <div className="thumbs">
+                {(focused.images ?? [])
+                  .filter((u) => /^https?:\/\//i.test(u))
+                  .slice(0, 3)
+                  .map((u, i) => (
+                    <img key={i} src={u} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                  ))}
+              </div>
+              <p>{t('comicPages', [String(focused.images?.length ?? 0)])}</p>
+            </div>
           ) : (
             <article className="preview" onClick={onPreviewClick} dangerouslySetInnerHTML={{ __html: previewHtml }} />
           )}

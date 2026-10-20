@@ -59,4 +59,14 @@ describe('fetchChapter', () => {
     const f = (async () => { throw new DOMException('aborted', 'AbortError'); }) as unknown as typeof fetch;
     await expect(fetchChapter(URL_, f)).rejects.toMatchObject({ name: 'AbortError' });
   });
+  test('capítulo de quadrinho → kind comic com as páginas em ordem', async () => {
+    const imgs = Array.from({ length: 4 }, (_, i) => `<div data-page="${i}"><img src="/img/p0${i}.webp" alt="Page ${i + 1} - Chapter 5" data-page-index="${i}"></div>`).join('');
+    const comicPage = `<html lang="en"><head><title>Série Chapter 5</title></head><body><header><img src="/logo.png" alt="logo"></header><main><h1>Série Chapter 5</h1>${imgs}</main></body></html>`;
+    const r = await fetchChapter(URL_, resp(comicPage) as unknown as typeof fetch);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.item.kind).toBe('comic');
+      expect(r.item.images).toEqual([0, 1, 2, 3].map((i) => `https://site.example/img/p0${i}.webp`));
+    }
+  });
 });
