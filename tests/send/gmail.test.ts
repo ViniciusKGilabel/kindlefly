@@ -103,3 +103,16 @@ describe('sendToKindle: ritmo e progresso', () => {
     expect(sleep).not.toHaveBeenCalled();
   });
 });
+
+describe('sendToKindle: falha no meio', () => {
+  test('onSent informa cada grupo enviado antes do erro', async () => {
+    const files = Array.from({ length: 3 }, (_, i) => file(`f${i}.epub`, 10 * 1024 * 1024));
+    const fetchFn = vi.fn().mockResolvedValueOnce(ok()).mockResolvedValue(new Response('', { status: 500 }));
+    const sent: string[][] = [];
+    await expect(sendToKindle(files, {
+      auth: fakeAuth(), kindleAddress: 'a@kindle.com', fetchFn, subject: 's', sleep: async () => {},
+      onSent: (fs) => sent.push(fs.map((f) => f.filename)),
+    })).rejects.toMatchObject({ code: 'gmail_error' });
+    expect(sent).toEqual([['f0.epub']]);
+  });
+});

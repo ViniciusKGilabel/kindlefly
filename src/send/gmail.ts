@@ -51,6 +51,8 @@ export async function sendToKindle(
   d: { auth: AuthLike; kindleAddress: string | null; fetchFn: typeof fetch; subject: string;
     sleep?: (ms: number) => Promise<void>;
     onProgress?: (sent: number, total: number) => void;
+    /** Chamado após cada e-mail enviado, com os arquivos que ele levou. */
+    onSent?: (files: EpubFile[]) => void;
   },
 ): Promise<{ emailsSent: number; tooLarge: string[] }> {
   if (!d.kindleAddress || !d.kindleAddress.trim()) throw new KfError('kindle_address_missing');
@@ -66,9 +68,11 @@ export async function sendToKindle(
   if (groups.length > 0) d.onProgress?.(0, groups.length);
   for (const g of groups) {
     if (emailsSent > 0) await sleep(EMAIL_DELAY_MS);
-    const raw = buildMimeMessage({ from, to, subject: d.subject, attachments: g.map((i) => files[i]!) });
+    const attachments = g.map((i) => files[i]!);
+    const raw = buildMimeMessage({ from, to, subject: d.subject, attachments });
     await sendWithRetry(raw, d.auth, d.fetchFn);
     emailsSent++;
+    d.onSent?.(attachments);
     d.onProgress?.(emailsSent, groups.length);
   }
   return { emailsSent, tooLarge: tooLargeNames };

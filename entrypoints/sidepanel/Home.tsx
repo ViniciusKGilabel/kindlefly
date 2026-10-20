@@ -5,6 +5,8 @@ import type { EpubFile } from '../../src/core/types';
 import { KfError } from '../../src/core/errors';
 import { activeTabUrl, errorMessage, extractActiveTab } from '../../src/panel/extract-active';
 import { itemsToEpubs } from '../../src/panel/pipeline';
+import { planSendFiles } from '../../src/panel/send-plan';
+import { exportNotice, sendFailedText, sentText } from '../../src/panel/send-report';
 import { htmlToChapter, previewBody } from '../../src/extract/to-chapter';
 import {
   addItem, removeItem, selectedItems, setAllSelected, setSelected, updateMeta, type QueueItem,
@@ -23,7 +25,7 @@ type Status =
   | { s: 'extracting' }
   | { s: 'images'; done: number; total: number }
   | { s: 'sending'; sent?: number; total?: number }
-  | { s: 'sent'; count: number; to: string }
+  | { s: 'sent'; count: number; to: string; tooLarge: number }
   | { s: 'info'; text: string }
   | { s: 'error'; text: string };
 
@@ -43,6 +45,13 @@ function download(file: EpubFile) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+async function downloadAll(files: EpubFile[]) {
+  for (const [i, f] of files.entries()) {
+    if (i > 0) await sleep(DOWNLOAD_GAP_MS);
+    download(f);
+  }
 }
 
 function unexpected(e: unknown): string {
@@ -72,6 +81,8 @@ export default function Home() {
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>({ s: 'idle' });
   const [notice, setNotice] = useState<string | null>(null);
+  /** EPUBs do último envio que não couberam no e-mail (em memória, para baixar sem reconstruir). */
+  const [oversize, setOversize] = useState<EpubFile[]>([]);
   const [kindle, setKindle] = useState<string | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -172,15 +183,12 @@ export default function Home() {
     setNotice(null);
     await saver.current.flush();
     try {
-      const { files, failedImages } = await itemsToEpubs(selectedItems(queueRef.current), {
+      const r = await itemsToEpubs(selectedItems(queueRef.current), {
         onProgress: (done, total) => setStatus({ s: 'images', done, total }),
       });
       setStatus({ s: 'idle' });
-      if (failedImages > 0) setNotice(t('imagesFailed', [String(failedImages)]));
-      for (const [i, f] of files.entries()) {
-        if (i > 0) await sleep(DOWNLOAD_GAP_MS);
-        download(f);
-      }
+      setNotice(exportNotice(r, t));
+      await downloadAll(r.files);
     } catch (e) {
       setStatus({ s: 'error', text: e instanceof KfError ? errorMessage(e, t) : unexpected(e) });
     }
@@ -188,31 +196,44 @@ export default function Home() {
 
   async function onSend() {
     setNotice(null);
+    setOversize([]);
     await saver.current.flush();
     setStatus({ s: 'sending' });
+    let sentFiles = 0;
     try {
       const items = selectedItems(queueRef.current);
-      const { files, failedImages } = await itemsToEpubs(items, {
+      const plan = await planSendFiles(items, {
         onProgress: (done, total) => setStatus({ s: 'images', done, total }),
       });
+      setNotice(exportNotice(plan, t));
+      if (plan.files.length === 0 && plan.tooLarge.length === 0) {
+        setStatus({ s: 'error', text: t('error_image_failed') });
+        return;
+      }
+      setOversize(plan.tooLarge);
       setStatus({ s: 'sending' });
       const kindleAddress = await getKindleAddress();
-      const r = await sendToKindle(files, {
+      const r = await sendToKindle(plan.files, {
         auth,
         kindleAddress,
         fetchFn: (...a) => fetch(...a),
         onProgress: (sent, total) => setStatus({ s: 'sending', sent, total }),
+        onSent: (fs) => {
+          sentFiles += fs.length;
+        },
         subject: items.length === 1 ? items[0]!.title : 'kindlefly',
       });
-      if (r.tooLarge.length > 0) {
-        setStatus({ s: 'error', text: `${t('error_too_large')} ${r.tooLarge.join(', ')}` });
-      } else {
-        setStatus({ s: 'sent', count: files.length, to: kindleAddress ?? '' });
-        if (failedImages > 0) setNotice(t('imagesFailed', [String(failedImages)]));
-      }
+      // Pelo planejamento nada passa do limite; por segurança, o que o Gmail recusar também vai para "Baixar".
+      const tooLarge = [...plan.tooLarge, ...plan.files.filter((f) => r.tooLarge.includes(f.filename))];
+      if (tooLarge.length > plan.tooLarge.length) setOversize(tooLarge);
+      setStatus({ s: 'sent', count: sentFiles, to: kindleAddress ?? '', tooLarge: tooLarge.length });
     } catch (e) {
-      setStatus({ s: 'error', text: errorMessage(e, t) });
+      setStatus({ s: 'error', text: sendFailedText(errorMessage(e, t), sentFiles, t) });
     }
+  }
+
+  async function onDownloadOversize() {
+    await downloadAll(oversize);
   }
 
   return (
@@ -243,8 +264,13 @@ export default function Home() {
       )}
       {status.s === 'sent' && (
         <p className="ok" role="status">
-          {t('sentCount', [String(status.count), status.to])}
+          {sentText({ sent: status.count, to: status.to, tooLarge: status.tooLarge }, t)}
         </p>
+      )}
+      {oversize.length > 0 && !busy && (
+        <button type="button" data-testid="download-too-large" onClick={onDownloadOversize}>
+          {t('downloadTooLarge')}
+        </button>
       )}
       {status.s === 'info' && (
         <p className="hint" role="status">

@@ -193,5 +193,17 @@
   },
   "comicPages": {
     "message": "$1 páginas"
+  },
+  "sentSomeTooLarge": {
+    "message": "$1 arquivo(s) enviado(s) para $2; $3 grande(s) demais para e-mail"
+  },
+  "downloadTooLarge": {
+    "message": "Baixar os que não couberam"
+  },
+  "sentBeforeError": {
+    "message": "$1 arquivo(s) já tinham sido enviados antes do erro."
+  },
+  "itemsFailed": {
+    "message": "Não foi possível gerar (nenhuma página): $1"
   }
 }
