@@ -30,6 +30,17 @@ describe('fetchImageBlob', () => {
     const f = resp(new Uint8Array(IMAGE_MAX_BYTES + 1), { headers: { 'content-type': 'image/png' } });
     await expect(fetchImageBlob('https://x/a.png', f)).rejects.toMatchObject({ code: 'image_failed' });
   });
+  test('SVG rejeitado (tipo ou extensão)', async () => {
+    const f = resp('<svg/>', { headers: { 'content-type': 'image/svg+xml' } });
+    await expect(fetchImageBlob('https://x/a', f)).rejects.toMatchObject({ code: 'image_failed' });
+    const g = resp('<svg/>', { headers: { 'content-type': 'image/png' } });
+    await expect(fetchImageBlob('https://x/a.svg', g)).rejects.toMatchObject({ code: 'image_failed' });
+  });
+  test('octet-stream só com extensão de imagem', async () => {
+    const mk = () => resp('abc', { headers: { 'content-type': 'application/octet-stream' } });
+    expect((await fetchImageBlob('https://x/a.webp', mk())).size).toBe(3);
+    await expect(fetchImageBlob('https://x/a', mk())).rejects.toMatchObject({ code: 'image_failed' });
+  });
   test('AbortError propaga e opções corretas', async () => {
     let seen: RequestInit | undefined;
     const f = (async (_u: string, init?: RequestInit) => { seen = init; throw new DOMException('x', 'AbortError'); }) as unknown as typeof fetch;

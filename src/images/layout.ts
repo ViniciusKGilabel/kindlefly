@@ -86,3 +86,18 @@ export function sliceRanges(
   }
   return ranges;
 }
+
+/**
+ * Retângulo de origem (no bitmap) para a fatia escalada [a, b).
+ * `scale` = largura escalada / largura original. Limita a [0, srcHeight].
+ */
+export function sliceSourceRect(
+  a: number,
+  b: number,
+  scale: number,
+  srcHeight: number,
+): { sy: number; sh: number } {
+  const sy = Math.min(srcHeight, Math.max(0, a / scale));
+  const end = Math.min(srcHeight, Math.max(sy, b / scale));
+  return { sy, sh: end - sy };
+}

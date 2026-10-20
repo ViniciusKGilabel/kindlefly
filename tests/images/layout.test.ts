@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import {
   IMAGE_MAX_WIDTH,
   PAGE_ASPECT,
@@ -76,4 +76,14 @@ test('sliceRanges: intervalos contíguos, não vazios e cobrindo [0, height)', (
     expect(end).toBeGreaterThan(start);
     if (i > 0) expect(start).toBe(ranges[i - 1]![1]);
   }
+});
+
+import { sliceSourceRect } from '../../src/images/layout';
+describe('sliceSourceRect', () => {
+  test('mapeia fatia escalada para origem', () => {
+    expect(sliceSourceRect(100, 300, 0.5, 10000)).toEqual({ sy: 200, sh: 400 });
+  });
+  test('limita ao fim do bitmap', () => {
+    expect(sliceSourceRect(900, 1100, 1, 1000)).toEqual({ sy: 900, sh: 100 });
+  });
 });
