@@ -81,6 +81,23 @@ describe('falsos positivos e ruído', () => {
   });
 });
 
+describe('regras de borda', () => {
+  test('1-2 páginas marcadas + 4 não marcadas → null (sem fallback)', () => {
+    const marked = [1, 2].map((i) => `<img src="https://a.example/p${i}.jpg" alt="Page ${i}">`).join('');
+    const rest = [3, 4, 5, 6].map((i) => big(i)).join('');
+    expect(extractComicImages(parse(`<body><div>${marked}${rest}</div></body>`))).toBeNull();
+  });
+  test('width em porcentagem não conta como pequena', () => {
+    const g = [1, 2, 3, 4].map((i) => big(i, 'width="50%"')).join('');
+    expect(extractComicImages(parse(`<body><div>${g}</div></body>`))).toHaveLength(4);
+  });
+  test('um site-logo.png entre páginas normais é descartado, o resto fica', () => {
+    const g = [1, 2, 3, 4].map((i) => big(i)).join('');
+    const d = parse(`<body><div><img src="https://a.example/site-logo.png">${g}</div></body>`);
+    expect(extractComicImages(d)).toEqual([1, 2, 3, 4].map((i) => `https://a.example/s/${i}.jpg`));
+  });
+});
+
 describe('extractFromDocument com quadrinho', () => {
   test('kind comic, images, html vazio, título limpo', () => {
     const r = extractFromDocument(load('comic-reader.html'), 'https://reader.example/c/10');

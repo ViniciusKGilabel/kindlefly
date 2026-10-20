@@ -21,7 +21,7 @@ function isPageMarked(img: Element): boolean {
 function tooSmall(img: Element): boolean {
   for (const a of ['width', 'height']) {
     const v = img.getAttribute(a);
-    if (v !== null && /^\s*\d+/.test(v) && parseInt(v, 10) < MIN_SIDE) return true;
+    if (v !== null && /^\s*\d+(px)?\s*$/i.test(v) && parseInt(v, 10) < MIN_SIDE) return true;
   }
   return false;
 }
@@ -60,8 +60,11 @@ export function extractComicImages(doc: Document): string[] | null {
     );
   });
   const marked = imgs.filter(isPageMarked);
-  const isMarked = marked.length >= MIN_MARKED;
-  if (isMarked) imgs = marked;
+  const isMarked = marked.length > 0;
+  if (isMarked) {
+    if (marked.length < MIN_MARKED) return null;
+    imgs = marked;
+  }
   if (imgs.length < (isMarked ? MIN_MARKED : MIN_UNMARKED)) return null;
 
   // Ancestral mais profundo (a partir da 1ª imagem) que contém a maioria das candidatas.
