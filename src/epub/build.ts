@@ -16,7 +16,8 @@ export async function buildEpub(book: Book): Promise<Uint8Array> {
   book.chapters.forEach((c, i) => {
     zip.file(`OEBPS/chapters/c${i + 1}.xhtml`, chapterXhtml(c, book.language));
   });
-  for (const im of book.images) zip.file(`OEBPS/images/${im.href}`, im.data);
+  // JPEG já é comprimido: STORE evita gastar tempo comprimindo de novo (ganho ~0).
+  for (const im of book.images) zip.file(`OEBPS/images/${im.href}`, im.data, { compression: 'STORE' });
   return zip.generateAsync({
     type: 'uint8array',
     compression: 'DEFLATE',

@@ -106,3 +106,25 @@ function countTopLevel(nav: string) {
   }
   return { topLevel };
 }
+
+/** Método de compressão (0 = STORE, 8 = DEFLATE) da entrada `name`, lido do cabeçalho local do zip. */
+function methodOf(data: Uint8Array, name: string): number | undefined {
+  const dv = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  for (let i = 0; i + 30 <= data.length; i++) {
+    if (dv.getUint32(i, true) !== 0x04034b50) continue;
+    const len = dv.getUint16(i + 26, true);
+    if (new TextDecoder().decode(data.slice(i + 30, i + 30 + len)) === name) return dv.getUint16(i + 8, true);
+  }
+  return undefined;
+}
+
+test('imagens entram sem compressão (STORE); xhtml continua DEFLATE', async () => {
+  const data = await buildEpub(book({
+    chapters: [ch('1', 'C', [], `<p>${'texto '.repeat(200)}</p>`)],
+    images: [{ href: 'i0-0.jpg', mediaType: 'image/jpeg', data: new Uint8Array(4096).fill(7) }],
+  }));
+  expect(methodOf(data, 'OEBPS/images/i0-0.jpg')).toBe(0);
+  expect(methodOf(data, 'OEBPS/chapters/c1.xhtml')).toBe(8);
+  const z = await JSZip.loadAsync(data);
+  expect((await z.file('OEBPS/images/i0-0.jpg')!.async('uint8array')).length).toBe(4096);
+});
