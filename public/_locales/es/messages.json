@@ -92,9 +92,6 @@
   "sending": {
     "message": "Enviando…"
   },
-  "previewLabel": {
-    "message": "Vista previa"
-  },
   "retryExtract": {
     "message": "Reintentar"
   },
@@ -205,5 +202,23 @@
   },
   "itemsFailed": {
     "message": "No se pudo generar (ninguna página): $1"
+  },
+  "currentPage": {
+    "message": "Página actual"
+  },
+  "refreshPage": {
+    "message": "Actualizar"
+  },
+  "inList": {
+    "message": "Ya está en la lista (mostrar)"
+  },
+  "closeItem": {
+    "message": "Cerrar"
+  },
+  "itemLabel": {
+    "message": "Elemento de la lista"
+  },
+  "rangeClear": {
+    "message": "Limpiar"
   }
 }

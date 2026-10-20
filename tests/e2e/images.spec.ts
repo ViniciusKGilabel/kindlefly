@@ -271,3 +271,33 @@ test.describe('epubcheck', () => {
     epubcheck(comicEpub);
   });
 });
+
+test('página atual: prévia acompanha a aba; capítulos seguem; limpar', async () => {
+  const ctx = await launch();
+  try {
+    const { content, panel } = await openPanel(ctx, `${server.origin}/article`);
+    await expect(panel.getByTestId('current-title')).toContainText('Artigo com Imagens');
+    await expect(panel.getByTestId('current-preview')).toContainText('Parágrafo 1');
+
+    await content.goto(`${server.origin}/comic/chapter/7`);
+    await expect(panel.getByTestId('current-title')).toContainText('Test Comic Chapter 7');
+    await expect(panel.getByTestId('current-preview')).toContainText('3');
+    await expect(panel.getByTestId('range-from')).toHaveValue('7');
+
+    await panel.getByTestId('range-to').fill('9');
+    await panel.getByTestId('range-from').fill('8');
+    await panel.getByTestId('range-clear').click();
+    await expect(panel.getByTestId('range-from')).toHaveValue('7');
+    await expect(panel.getByTestId('range-to')).toHaveValue('');
+
+    await content.goto(`${server.origin}/comic/chapter/12`);
+    await expect(panel.getByTestId('range-from')).toHaveValue('12');
+    await panel.getByTestId('add-to-list').click();
+    await expect(panel.getByTestId('add-to-list')).toHaveText('Já está na lista (mostrar)');
+    await expect(panel.getByTestId('close-item')).toBeVisible();
+    await panel.getByTestId('close-item').click();
+    await expect(panel.getByTestId('close-item')).toBeHidden();
+  } finally {
+    await ctx.close();
+  }
+});

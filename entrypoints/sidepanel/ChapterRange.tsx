@@ -35,6 +35,12 @@ export default function ChapterRange({ chapter, disabled, onItem, onRunningChang
   const error =
     validity === 'invalid' ? t('rangeInvalid') : validity === 'too_many' ? t('rangeTooMany', [String(RANGE_MAX)]) : null;
 
+  function clear() {
+    setFrom(String(chapter.number));
+    setTo('');
+    setSummary(null);
+  }
+
   async function start() {
     const ac = new AbortController();
     abortRef.current = ac;
@@ -87,7 +93,10 @@ export default function ChapterRange({ chapter, disabled, onItem, onRunningChang
           <button type="button" onClick={() => abortRef.current?.abort()}>{t('rangeCancel')}</button>
         </div>
       ) : (
-        <button type="button" data-testid="range-add" onClick={start} disabled={disabled || validity !== 'ok'}>{t('rangeAdd')}</button>
+        <div className="row">
+          <button type="button" data-testid="range-add" onClick={start} disabled={disabled || validity !== 'ok'}>{t('rangeAdd')}</button>
+          <button type="button" data-testid="range-clear" onClick={clear}>{t('rangeClear')}</button>
+        </div>
       )}
       {summary && <p className="hint" role="status" data-testid="range-summary">{summary}</p>}
     </div>

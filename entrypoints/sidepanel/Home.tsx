@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createGoogleAuth } from '../../src/auth/google';
 import { t } from '../../src/core/i18n';
 import type { EpubFile } from '../../src/core/types';
@@ -7,7 +7,7 @@ import { activeTabUrl, errorMessage, extractActiveTab } from '../../src/panel/ex
 import { itemsToEpubs } from '../../src/panel/pipeline';
 import { planSendFiles } from '../../src/panel/send-plan';
 import { exportNotice, sendFailedText, sentText } from '../../src/panel/send-report';
-import { htmlToChapter, previewBody } from '../../src/extract/to-chapter';
+import { watchActiveTab } from '../../src/panel/tab-watch';
 import {
   addItem, removeItem, selectedItems, setAllSelected, setSelected, updateMeta, type QueueItem,
 } from '../../src/queue/queue';
@@ -18,11 +18,12 @@ import { sendToKindle } from '../../src/send/gmail';
 import { getKindleAddress } from '../../src/settings/store';
 import { parseChapterUrl, type ChapterUrl } from '../../src/range/chapter-url';
 import ChapterRange from './ChapterRange';
+import CurrentPage, { type CurrentState } from './CurrentPage';
+import Preview from './Preview';
 import QueueList from './QueueList';
 
 type Status =
   | { s: 'idle' }
-  | { s: 'extracting' }
   | { s: 'images'; done: number; total: number }
   | { s: 'sending'; sent?: number; total?: number }
   | { s: 'sent'; count: number; to: string; tooLarge: number }
@@ -59,21 +60,6 @@ function unexpected(e: unknown): string {
   return t('error_unexpected');
 }
 
-function onPreviewClick(e: MouseEvent<HTMLElement>) {
-  const a = (e.target as HTMLElement).closest('a');
-  if (!a) return;
-  e.preventDefault();
-  const href = a.getAttribute('href') ?? '';
-  try {
-    const u = new URL(href, 'https://invalid.invalid/');
-    if (href && (u.protocol === 'http:' || u.protocol === 'https:') && u.host !== 'invalid.invalid') {
-      void browser.tabs.create({ url: u.href });
-    }
-  } catch {
-    // href inválido: ignora.
-  }
-}
-
 export default function Home() {
   const auth = useMemo(() => createGoogleAuth(), []);
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -88,6 +74,9 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const [chapter, setChapter] = useState<ChapterUrl | null>(null);
   const [ranging, setRanging] = useState(false);
+  const [current, setCurrent] = useState<CurrentState>({ s: 'loading' });
+  /** Descarta extrações velhas quando a aba muda no meio de uma leitura. */
+  const currentSeq = useRef(0);
   const saverRef = useRef<ReturnType<typeof createDebouncedSaver<QueueItem[]>> | null>(null);
   if (!saverRef.current) {
     saverRef.current = createDebouncedSaver<QueueItem[]>(
@@ -117,19 +106,31 @@ export default function Home() {
     return res.duplicate ? 'duplicate' : 'added';
   }
 
-  async function addActiveTab() {
+  /** Lê a página da aba ativa para a caixa "Página atual"; devolve o item, ou null se não deu. */
+  async function loadCurrent(): Promise<Omit<QueueItem, 'id' | 'selected' | 'addedAt'> | null> {
+    const seq = ++currentSeq.current;
+    setCurrent({ s: 'loading' });
     void refreshChapter();
-    setStatus({ s: 'extracting' });
     try {
-      const r = await extractActiveTab();
-      const res = addItem(queueRef.current, r, Date.now(), crypto.randomUUID());
-      commit(res.queue);
-      setFocusedId(res.id);
-      setStatus({ s: 'idle' });
+      const item = await extractActiveTab();
+      if (seq === currentSeq.current) setCurrent({ s: 'ready', item });
+      return item;
     } catch (e) {
-      if (e instanceof KfError && e.code === 'restricted_page') setStatus({ s: 'info', text: t('restrictedPage') });
-      else setStatus({ s: 'error', text: errorMessage(e, t) });
+      if (seq !== currentSeq.current) return null;
+      if (e instanceof KfError && e.code === 'restricted_page') setCurrent({ s: 'restricted' });
+      else setCurrent({ s: 'error', text: errorMessage(e, t) });
+      return null;
     }
+  }
+
+  /** Adiciona a página atual (a já lida na caixa; lê de novo só se ainda não houver). */
+  async function addActiveTab() {
+    const item = current.s === 'ready' ? current.item : await loadCurrent();
+    if (!item) return;
+    setStatus({ s: 'idle' });
+    const res = addItem(queueRef.current, item, Date.now(), crypto.randomUUID());
+    commit(res.queue);
+    setFocusedId(res.id);
   }
 
   useEffect(() => {
@@ -141,11 +142,16 @@ export default function Home() {
       void getKindleAddress().then(setKindle, () => setKindle(null));
       void refreshChapter();
       void auth.connectedEmail().then(setAccount, () => setAccount(null));
-      if (!autoAdded) {
-        autoAdded = true;
-        await addActiveTab();
+      const first = !autoAdded;
+      autoAdded = true;
+      const item = await loadCurrent();
+      if (first && item) {
+        const res = addItem(queueRef.current, item, Date.now(), crypto.randomUUID());
+        commit(res.queue);
+        setFocusedId(res.id);
       }
     })();
+    const unwatch = watchActiveTab(() => void loadCurrent());
     const flushNow = () => void saver.current.flush();
     const onHide = () => {
       if (document.visibilityState === 'hidden') flushNow();
@@ -153,6 +159,7 @@ export default function Home() {
     window.addEventListener('pagehide', flushNow);
     document.addEventListener('visibilitychange', onHide);
     return () => {
+      unwatch();
       window.removeEventListener('pagehide', flushNow);
       document.removeEventListener('visibilitychange', onHide);
       flushNow();
@@ -162,14 +169,11 @@ export default function Home() {
   const selected = selectedItems(queue);
   const n = selected.length;
   const focused = queue.find((i) => i.id === focusedId) ?? null;
-  const busy = status.s === 'extracting' || status.s === 'sending' || status.s === 'images' || ranging;
+  const busy = status.s === 'sending' || status.s === 'images' || ranging;
   const sendHint = !kindle ? t('hintNeedKindle') : !account ? t('hintNeedAccount') : null;
 
-  // Já sanitizado por htmlToChapter (sem scripts, handlers nem iframes): só então vai para o DOM.
-  const previewHtml = useMemo(
-    () => (focused && focused.kind !== 'merged' && focused.kind !== 'comic' ? previewBody(htmlToChapter(focused.html, { id: 'c1', title: focused.title })) : ''),
-    [focused?.id, focused?.html, focused?.title, focused?.kind],
-  );
+  const currentUrl = current.s === 'ready' ? current.item.sourceUrl : null;
+  const inList = currentUrl !== null && queue.some((i) => i.sourceUrl === currentUrl);
 
   function onMerge() {
     const sel = selectedItems(queueRef.current);
@@ -238,9 +242,13 @@ export default function Home() {
 
   return (
     <section className="screen">
-      <button type="button" className="primary" data-testid="add-to-list" onClick={addActiveTab} disabled={busy || !ready}>
-        {t('addToList')}
-      </button>
+      <CurrentPage
+        current={current}
+        inList={inList}
+        disabled={busy || !ready}
+        onRefresh={() => void loadCurrent()}
+        onAdd={() => void addActiveTab()}
+      />
 
       {chapter && (
         <ChapterRange
@@ -251,7 +259,6 @@ export default function Home() {
         />
       )}
 
-      {status.s === 'extracting' && <p role="status">{t('extracting')}</p>}
       {status.s === 'images' && (
         <p role="status">{t('imagesProgress', [String(Math.min(status.done + 1, status.total)), String(status.total)])}</p>
       )}
@@ -319,6 +326,12 @@ export default function Home() {
 
       {focused && (
         <>
+          <div className="current-head">
+            <h2>{t('itemLabel')}</h2>
+            <button type="button" className="icon" data-testid="close-item" aria-label={t('closeItem')} title={t('closeItem')} onClick={() => setFocusedId(null)}>
+              ×
+            </button>
+          </div>
           <label htmlFor="title">{t('titleLabel')}</label>
           <input
             id="title"
@@ -331,28 +344,7 @@ export default function Home() {
             value={focused.author}
             onChange={(e) => commit(updateMeta(queueRef.current, focused.id, { author: e.target.value }), true)}
           />
-          <h2>{t('previewLabel')}</h2>
-          {focused.kind === 'merged' ? (
-            <ol className="preview">
-              {(focused.parts ?? []).map((p, i) => (
-                <li key={i}>{p.images ? `${p.title} (${t('comicPages', [String(p.images.length)])})` : p.title}</li>
-              ))}
-            </ol>
-          ) : focused.kind === 'comic' ? (
-            <div className="preview">
-              <div className="thumbs">
-                {(focused.images ?? [])
-                  .filter((u) => /^https?:\/\//i.test(u))
-                  .slice(0, 3)
-                  .map((u, i) => (
-                    <img key={i} src={u} alt="" loading="lazy" referrerPolicy="no-referrer" />
-                  ))}
-              </div>
-              <p>{t('comicPages', [String(focused.images?.length ?? 0)])}</p>
-            </div>
-          ) : (
-            <article className="preview" onClick={onPreviewClick} dangerouslySetInnerHTML={{ __html: previewHtml }} />
-          )}
+          <Preview item={focused} />
         </>
       )}
     </section>

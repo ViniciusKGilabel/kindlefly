@@ -32,3 +32,9 @@ input[type='checkbox'] { width: auto; padding: 0; }
 .range .row label { margin: 0; }
 .range .row input { flex: 0 1 80px; }
 .range .grow { flex: 1; margin: 0; }
+.current { display: flex; flex-direction: column; gap: 6px; border: 1px solid #8884; border-radius: 6px; padding: 8px; margin-top: 8px; }
+.current-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.current-head h2 { margin: 0; }
+.current-title { margin: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.current-preview .preview { max-height: 22vh; font-size: 12px; }
+.current-preview .preview h1, .current-preview .preview h2 { font-size: 14px; text-transform: none; letter-spacing: 0; opacity: 1; }
