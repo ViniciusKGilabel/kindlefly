@@ -25,7 +25,11 @@ function ctx2d(c: OffscreenCanvas, opts?: CanvasRenderingContext2DSettings): Off
  * (estouraria o limite do Chrome em tiras muito altas): tudo é feito em faixas.
  * Coberto pelo e2e (jsdom não tem canvas).
  */
-export async function toKindleJpegs(blob: Blob, opts: { grayscale: boolean }): Promise<JpegSlice[]> {
+export async function toKindleJpegs(
+  blob: Blob,
+  opts: { grayscale: boolean; quality?: number },
+): Promise<JpegSlice[]> {
+  const quality = opts.quality ?? JPEG_QUALITY;
   try {
     const bmp = await createImageBitmap(blob);
     try {
@@ -68,7 +72,7 @@ export async function toKindleJpegs(blob: Blob, opts: { grayscale: boolean }): P
           ctx.imageSmoothingQuality = 'high';
           const { sy, sh } = sliceSourceRect(a, b, scale, bmp.height);
           ctx.drawImage(bmp, 0, sy, bmp.width, sh, 0, 0, width, h);
-          const jpeg = await c.convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY });
+          const jpeg = await c.convertToBlob({ type: 'image/jpeg', quality });
           out.push({ data: new Uint8Array(await jpeg.arrayBuffer()), width, height: h });
         } finally {
           c.width = c.height = 0;

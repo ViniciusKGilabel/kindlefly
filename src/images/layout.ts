@@ -6,8 +6,10 @@ export const PAGE_ASPECT = 1648 / 1236;
 export const IMAGE_CONCURRENCY = 4;
 /** Tamanho máximo de uma imagem baixada, em bytes (20 MB). */
 export const IMAGE_MAX_BYTES = 20 * 1024 * 1024;
-/** Qualidade do JPEG gerado. */
-export const JPEG_QUALITY = 0.8;
+/** Degraus de qualidade do JPEG: o primeiro é o padrão; os outros só quando o EPUB não cabe no e-mail. */
+export const JPEG_QUALITY_STEPS = [0.8, 0.65, 0.5] as const;
+/** Qualidade padrão do JPEG gerado. */
+export const JPEG_QUALITY = JPEG_QUALITY_STEPS[0];
 
 /** Desvio-padrão máximo (populacional) de luma para considerar a linha lisa. */
 const BLANK_STDDEV = 6;

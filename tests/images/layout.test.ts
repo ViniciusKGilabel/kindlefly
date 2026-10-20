@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import {
   IMAGE_MAX_WIDTH,
+  JPEG_QUALITY,
+  JPEG_QUALITY_STEPS,
   PAGE_ASPECT,
   isBlankRow,
   sliceRanges,
@@ -86,4 +88,9 @@ describe('sliceSourceRect', () => {
   test('limita ao fim do bitmap', () => {
     expect(sliceSourceRect(900, 1100, 1, 1000)).toEqual({ sy: 900, sh: 100 });
   });
+});
+
+test('degraus de qualidade JPEG: começa em JPEG_QUALITY e desce', () => {
+  expect(JPEG_QUALITY_STEPS).toEqual([0.8, 0.65, 0.5]);
+  expect(JPEG_QUALITY_STEPS[0]).toBe(JPEG_QUALITY);
 });

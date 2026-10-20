@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { KfError } from '../../src/core/errors';
 import type { Chapter } from '../../src/core/types';
-import { embedImages } from '../../src/images/embed';
+import { createImageCache, embedImages } from '../../src/images/embed';
 
 const ch = (id: string, body: string, imageUrls: string[]): Chapter => ({ id, title: id, xhtmlBody: body, headings: [], imageUrls });
 const fetchImage = async (url: string) => new Blob([url]);
@@ -92,5 +92,44 @@ describe('embedImages: páginas de quadrinho (kf-page)', () => {
       ...base, fetchImage: async (u: string) => { if (u.includes('bad')) throw new Error('x'); return new Blob([u]); },
     });
     expect(r.chapters[0]!.xhtmlBody).toBe('<div class="kf-page"><img src="../images/i1-0.jpg" alt="" /></div>');
+  });
+});
+
+describe('embedImages: qualidade e cache', () => {
+  test('repassa a qualidade ao conversor (padrão JPEG_QUALITY)', async () => {
+    const seen: Array<number | undefined> = [];
+    const conv = async (b: Blob, o: { grayscale: boolean; quality?: number }) => { seen.push(o.quality); return convert(b); };
+    await embedImages([ch('c1', '<img src="kf-img:0"/>', ['https://x/a.jpg'])], { ...base, convert: conv });
+    await embedImages([ch('c1', '<img src="kf-img:0"/>', ['https://x/a.jpg'])], { ...base, convert: conv, quality: 0.5 });
+    expect(seen).toEqual([0.8, 0.5]);
+  });
+  test('cache: mesma URL+qualidade não baixa nem converte de novo; outra qualidade só reconverte', async () => {
+    let fetches = 0;
+    let converts = 0;
+    const deps = {
+      ...base,
+      cache: createImageCache(),
+      fetchImage: async (u: string) => { fetches++; return new Blob([u]); },
+      convert: async (b: Blob) => { converts++; return convert(b); },
+    };
+    const chs = [ch('c1', '<img src="kf-img:0"/><img src="kf-img:1"/>', ['https://x/a.jpg', 'https://x/b.jpg'])];
+    const a = await embedImages(chs, deps);
+    const b = await embedImages(chs, deps);
+    expect([fetches, converts]).toEqual([2, 2]);
+    expect(b.images.map((i) => i.href)).toEqual(a.images.map((i) => i.href));
+    await embedImages(chs, { ...deps, quality: 0.65 });
+    expect([fetches, converts]).toEqual([2, 4]);
+  });
+  test('cache: falha de download fica em cache e continua contada', async () => {
+    let fetches = 0;
+    const deps = {
+      ...base,
+      cache: createImageCache(),
+      fetchImage: async () => { fetches++; throw new KfError('image_failed'); },
+    };
+    const chs = [ch('c1', '<img src="kf-img:0"/>', ['https://x/a.jpg'])];
+    expect((await embedImages(chs, deps)).failed).toBe(1);
+    expect((await embedImages(chs, { ...deps, quality: 0.5 })).failed).toBe(1);
+    expect(fetches).toBe(1);
   });
 });

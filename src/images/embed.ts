@@ -1,16 +1,42 @@
 import type { Chapter, EpubImage } from '../core/types';
 import { fetchImageBlob } from './fetch-image';
 import { toKindleJpegs, type JpegSlice } from './convert';
-import { IMAGE_CONCURRENCY } from './layout';
+import { IMAGE_CONCURRENCY, JPEG_QUALITY } from './layout';
+
+/**
+ * Cache em memória durante uma exportação: o download por URL e as fatias por
+ * URL + qualidade + tons de cinza. Falhas também ficam (não tenta de novo).
+ */
+export interface ImageCache {
+  blobs: Map<string, Promise<Blob>>;
+  slices: Map<string, Promise<JpegSlice[]>>;
+}
+
+export function createImageCache(): ImageCache {
+  return { blobs: new Map(), slices: new Map() };
+}
+
+function cached<T>(map: Map<string, Promise<T>> | undefined, key: string, make: () => Promise<T>): Promise<T> {
+  if (!map) return make();
+  let p = map.get(key);
+  if (!p) {
+    p = make();
+    map.set(key, p);
+  }
+  return p;
+}
 
 export interface EmbedDeps {
   fetchFn: typeof fetch;
   grayscale: boolean;
+  /** Qualidade do JPEG (padrão JPEG_QUALITY). */
+  quality?: number;
+  cache?: ImageCache;
   signal?: AbortSignal;
   onProgress?: (done: number, total: number) => void;
   /** Injetáveis para teste; os padrões são o download e a conversão reais. */
   fetchImage?: (url: string, fetchFn: typeof fetch, signal?: AbortSignal) => Promise<Blob>;
-  convert?: (blob: Blob, opts: { grayscale: boolean }) => Promise<JpegSlice[]>;
+  convert?: (blob: Blob, opts: { grayscale: boolean; quality: number }) => Promise<JpegSlice[]>;
 }
 
 const IMG_MARKER = /<img\b[^>]*\bsrc=(["'])kf-img:(\d+)\1[^>]*>/g;
@@ -38,6 +64,7 @@ export async function embedImages(
 ): Promise<{ chapters: Chapter[]; images: EpubImage[]; failed: number }> {
   const fetchImage = d.fetchImage ?? fetchImageBlob;
   const convert = d.convert ?? toKindleJpegs;
+  const quality = d.quality ?? JPEG_QUALITY;
 
   const urls: string[] = [];
   const globalOf = new Map<string, number>();
@@ -58,8 +85,10 @@ export async function embedImages(
     while (next < urls.length) {
       const i = next++;
       try {
-        const blob = await fetchImage(urls[i]!, d.fetchFn, d.signal);
-        const slices = await convert(blob, { grayscale: d.grayscale });
+        const url = urls[i]!;
+        const blob = await cached(d.cache?.blobs, url, () => fetchImage(url, d.fetchFn, d.signal));
+        const key = `${quality}|${d.grayscale ? 'g' : 'c'}|${url}`;
+        const slices = await cached(d.cache?.slices, key, () => convert(blob, { grayscale: d.grayscale, quality }));
         results[i] = slices.length > 0 ? slices : null;
       } catch (e) {
         if (isAbort(e)) throw e;
