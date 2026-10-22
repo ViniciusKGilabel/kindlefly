@@ -220,5 +220,8 @@
   },
   "rangeClear": {
     "message": "Clear"
+  },
+  "currentEmpty": {
+    "message": "No page. Click Refresh to read the open page."
   }
 }

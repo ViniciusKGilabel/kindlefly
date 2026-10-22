@@ -7,7 +7,6 @@ import { activeTabUrl, errorMessage, extractActiveTab } from '../../src/panel/ex
 import { itemsToEpubs } from '../../src/panel/pipeline';
 import { planSendFiles } from '../../src/panel/send-plan';
 import { exportNotice, sendFailedText, sentText } from '../../src/panel/send-report';
-import { watchActiveTab } from '../../src/panel/tab-watch';
 import {
   addItem, removeItem, selectedItems, setAllSelected, setSelected, updateMeta, type QueueItem,
 } from '../../src/queue/queue';
@@ -32,7 +31,7 @@ type Status =
 
 const DOWNLOAD_GAP_MS = 300;
 const META_SAVE_MS = 400;
-// A aba ativa é adicionada uma vez por vida do painel (Home remonta ao voltar das Configurações).
+// A aba ativa é adicionada uma vez por vida do painel.
 let autoAdded = false;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -60,7 +59,7 @@ function unexpected(e: unknown): string {
   return t('error_unexpected');
 }
 
-export default function Home() {
+export default function Home({ active }: { active: boolean }) {
   const auth = useMemo(() => createGoogleAuth(), []);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const queueRef = useRef<QueueItem[]>([]);
@@ -75,6 +74,7 @@ export default function Home() {
   const [chapter, setChapter] = useState<ChapterUrl | null>(null);
   const [ranging, setRanging] = useState(false);
   const [current, setCurrent] = useState<CurrentState>({ s: 'loading' });
+  // A página atual e os capítulos só mudam quando a pessoa clica em Atualizar ou Limpar.
   /** Descarta extrações velhas quando a aba muda no meio de uma leitura. */
   const currentSeq = useRef(0);
   const saverRef = useRef<ReturnType<typeof createDebouncedSaver<QueueItem[]>> | null>(null);
@@ -139,9 +139,7 @@ export default function Home() {
       queueRef.current = saved;
       setQueue(saved);
       setReady(true);
-      void getKindleAddress().then(setKindle, () => setKindle(null));
       void refreshChapter();
-      void auth.connectedEmail().then(setAccount, () => setAccount(null));
       const first = !autoAdded;
       autoAdded = true;
       const item = await loadCurrent();
@@ -151,7 +149,6 @@ export default function Home() {
         setFocusedId(res.id);
       }
     })();
-    const unwatch = watchActiveTab(() => void loadCurrent());
     const flushNow = () => void saver.current.flush();
     const onHide = () => {
       if (document.visibilityState === 'hidden') flushNow();
@@ -159,12 +156,24 @@ export default function Home() {
     window.addEventListener('pagehide', flushNow);
     document.addEventListener('visibilitychange', onHide);
     return () => {
-      unwatch();
       window.removeEventListener('pagehide', flushNow);
       document.removeEventListener('visibilitychange', onHide);
       flushNow();
     };
   }, []);
+
+  // Home fica montada atrás das Configurações (buscas e envios continuam); ao voltar, relê o que pode ter mudado lá.
+  useEffect(() => {
+    if (!active) return;
+    void getKindleAddress().then(setKindle, () => setKindle(null));
+    void auth.connectedEmail().then(setAccount, () => setAccount(null));
+  }, [active]);
+
+  function clearCurrent() {
+    currentSeq.current++;
+    setCurrent({ s: 'empty' });
+    setChapter(null);
+  }
 
   const selected = selectedItems(queue);
   const n = selected.length;
@@ -241,12 +250,14 @@ export default function Home() {
   }
 
   return (
-    <section className="screen">
+    <section className="screen" hidden={!active}>
       <CurrentPage
         current={current}
         inList={inList}
         disabled={busy || !ready}
+        locked={ranging}
         onRefresh={() => void loadCurrent()}
+        onClear={clearCurrent}
         onAdd={() => void addActiveTab()}
       />
 

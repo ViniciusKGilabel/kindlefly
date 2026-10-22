@@ -220,5 +220,8 @@
   },
   "rangeClear": {
     "message": "Limpar"
+  },
+  "currentEmpty": {
+    "message": "Nenhuma página. Clique em Atualizar para ler a página aberta."
   }
 }

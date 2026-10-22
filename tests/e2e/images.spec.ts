@@ -99,6 +99,8 @@ async function openPanel(ctx: BrowserContext, url: string): Promise<{ content: P
   await panel.goto(`chrome-extension://${EXT_ID}/sidepanel.html`);
   await expect(panel.getByTestId('add-to-list')).toBeVisible();
   await content.bringToFront();
+  // no teste o painel abre como aba (e lê a si mesmo); Atualizar lê a página de conteúdo
+  await panel.getByTestId('refresh-page').click();
   await expect(panel.getByTestId('add-to-list')).toBeEnabled();
   return { content, panel };
 }
@@ -272,29 +274,48 @@ test.describe('epubcheck', () => {
   });
 });
 
-test('página atual: prévia acompanha a aba; capítulos seguem; limpar', async () => {
+test('página atual: fica no site até Atualizar; Limpar; capítulos seguem ao navegar e nas configurações', async () => {
   const ctx = await launch();
   try {
     const { content, panel } = await openPanel(ctx, `${server.origin}/article`);
     await expect(panel.getByTestId('current-title')).toContainText('Artigo com Imagens');
     await expect(panel.getByTestId('current-preview')).toContainText('Parágrafo 1');
 
+    // navegar não muda nada: só o Atualizar
     await content.goto(`${server.origin}/comic/chapter/7`);
+    await panel.waitForTimeout(1000);
+    await expect(panel.getByTestId('current-title')).toContainText('Artigo com Imagens');
+    await expect(panel.getByTestId('range-from')).toHaveCount(0);
+    await panel.getByTestId('refresh-page').click();
     await expect(panel.getByTestId('current-title')).toContainText('Test Comic Chapter 7');
-    await expect(panel.getByTestId('current-preview')).toContainText('3');
     await expect(panel.getByTestId('range-from')).toHaveValue('7');
 
+    // Limpar do intervalo
     await panel.getByTestId('range-to').fill('9');
     await panel.getByTestId('range-from').fill('8');
     await panel.getByTestId('range-clear').click();
     await expect(panel.getByTestId('range-from')).toHaveValue('7');
     await expect(panel.getByTestId('range-to')).toHaveValue('');
 
-    await content.goto(`${server.origin}/comic/chapter/12`);
-    await expect(panel.getByTestId('range-from')).toHaveValue('12');
-    await panel.getByTestId('add-to-list').click();
-    await expect(panel.getByTestId('add-to-list')).toHaveText('Já está na lista (mostrar)');
-    await expect(panel.getByTestId('close-item')).toBeVisible();
+    // busca 7..9 continua com a pessoa navegando e indo às configurações
+    await panel.getByTestId('range-to').fill('9');
+    await panel.getByTestId('range-add').click();
+    await expect(panel.getByTestId('refresh-page')).toBeDisabled();
+    await content.goto(`${server.origin}/article`);
+    await panel.getByRole('button', { name: 'Configurações' }).click();
+    await panel.waitForTimeout(500);
+    await panel.getByRole('button', { name: 'Voltar' }).click();
+    await expect(panel.getByTestId('range-summary')).toContainText('3', { timeout: 30_000 });
+    await expect(panel.getByTestId('current-title')).toContainText('Test Comic Chapter 7');
+    for (const n of [7, 8, 9]) await expect(panel.getByRole('button', { name: `Test Comic Chapter ${n}` }).first()).toBeVisible();
+
+    // Limpar da página atual
+    await panel.getByTestId('clear-page').click();
+    await expect(panel.getByTestId('current-title')).toHaveCount(0);
+    await expect(panel.getByTestId('range-from')).toHaveCount(0);
+    await expect(panel.getByTestId('add-to-list')).toBeDisabled();
+
+    await panel.getByRole('button', { name: 'Test Comic Chapter 8' }).first().click();
     await panel.getByTestId('close-item').click();
     await expect(panel.getByTestId('close-item')).toBeHidden();
   } finally {

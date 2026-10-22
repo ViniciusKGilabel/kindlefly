@@ -38,3 +38,4 @@ input[type='checkbox'] { width: auto; padding: 0; }
 .current-title { margin: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .current-preview .preview { max-height: 22vh; font-size: 12px; }
 .current-preview .preview h1, .current-preview .preview h2 { font-size: 14px; text-transform: none; letter-spacing: 0; opacity: 1; }
+[hidden] { display: none !important; }
