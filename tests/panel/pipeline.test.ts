@@ -135,3 +135,12 @@ test('itemsToEpubs: imagens entram no EPUB (manifest + arquivo) e falhas são co
   expect(ch).toContain('<img src="../images/i0-0.jpg" alt="A" />');
   expect(ch).not.toContain('kf-img');
 });
+
+test('capítulo vira parte de uma série (título editado manda)', async () => {
+  const file = await itemToEpub(item, { title: 'Shadow Slave Chapter 450', author: '' });
+  const opf = await (await JSZip.loadAsync(file.data)).file('OEBPS/content.opf')!.async('string');
+  expect(opf).toContain('<meta property="belongs-to-collection" id="series">Shadow Slave</meta>');
+  expect(opf).toContain('<meta refines="#series" property="group-position">450</meta>');
+  const plain = await itemToEpub(item, edits);
+  expect(await (await JSZip.loadAsync(plain.data)).file('OEBPS/content.opf')!.async('string')).not.toContain('belongs-to-collection');
+});

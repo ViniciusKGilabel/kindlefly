@@ -92,9 +92,6 @@
   "sending": {
     "message": "Sending…"
   },
-  "previewLabel": {
-    "message": "Preview"
-  },
   "retryExtract": {
     "message": "Try again"
   },
@@ -205,5 +202,26 @@
   },
   "itemsFailed": {
     "message": "Could not be generated (no pages): $1"
+  },
+  "currentPage": {
+    "message": "Current page"
+  },
+  "refreshPage": {
+    "message": "Refresh"
+  },
+  "inList": {
+    "message": "Already in list (show)"
+  },
+  "closeItem": {
+    "message": "Close"
+  },
+  "itemLabel": {
+    "message": "List item"
+  },
+  "rangeClear": {
+    "message": "Clear"
+  },
+  "currentEmpty": {
+    "message": "No page. Click Refresh to read the open page."
   }
 }

@@ -1,3 +1,4 @@
+import { seriesFromTitle } from '../epub/series';
 import { t } from '../core/i18n';
 import { sanitizeFilename } from '../core/filename';
 import type { Book, EpubFile, ExtractedItem } from '../core/types';
@@ -109,6 +110,8 @@ export async function buildItem(
     chapters,
     images,
   };
+  const series = seriesFromTitle(title);
+  if (series) book.series = series;
   return {
     file: { filename: sanitizeFilename(title) + '.epub', data: await buildEpub(book) },
     failed,

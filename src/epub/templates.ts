@@ -40,6 +40,18 @@ function isoNoMillis(d: Date): string {
   return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
+function seriesMeta(book: Book): string {
+  if (!book.series) return '';
+  const name = escapeXml(book.series.name);
+  const pos = String(book.series.position);
+  return `
+    <meta property="belongs-to-collection" id="series">${name}</meta>
+    <meta refines="#series" property="collection-type">series</meta>
+    <meta refines="#series" property="group-position">${pos}</meta>
+    <meta name="calibre:series" content="${name}"/>
+    <meta name="calibre:series_index" content="${pos}"/>`;
+}
+
 export function contentOpf(book: Book): string {
   const lang = escapeXml(book.language);
   const chapterItems = book.chapters
@@ -55,7 +67,7 @@ export function contentOpf(book: Book): string {
     <dc:title>${escapeXml(book.title)}</dc:title>
     <dc:creator>${escapeXml(book.author)}</dc:creator>
     <dc:language>${lang}</dc:language>
-    <meta property="dcterms:modified">${isoNoMillis(book.modified)}</meta>
+    <meta property="dcterms:modified">${isoNoMillis(book.modified)}</meta>${seriesMeta(book)}
   </metadata>
   <manifest>
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>

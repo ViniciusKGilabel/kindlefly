@@ -28,3 +28,19 @@ test.skipIf(!hasJava)('livro de 2 capítulos com títulos e entidades passa no e
   expect(r.stdout + r.stderr).toContain('No errors or warnings detected');
   expect(r.status).toBe(0);
 }, 120_000);
+
+test.skipIf(!hasJava)('livro com série passa no epubcheck', async () => {
+  const book: Book = {
+    title: 'Shadow Slave Chapter 450', author: 'site', language: 'en',
+    identifier: 'urn:uuid:22222222-2222-4222-8222-222222222222',
+    modified: new Date('2026-10-18T12:00:00Z'),
+    chapters: [{ id: '1', title: 'Chapter 450', headings: [], xhtmlBody: '<p>Texto</p>' }],
+    images: [],
+    series: { name: 'Shadow Slave', position: 450.5 },
+  };
+  const file = join(mkdtempSync(join(tmpdir(), 'kf-')), 'series.epub');
+  writeFileSync(file, await buildEpub(book));
+  const r = spawnSync('node', ['scripts/epubcheck.mjs', file], { encoding: 'utf8' });
+  expect(r.stdout + r.stderr).toContain('No errors or warnings detected');
+  expect(r.status).toBe(0);
+}, 120_000);

@@ -33,6 +33,8 @@ export interface Book {
   modified: Date;
   chapters: Chapter[];
   images: EpubImage[]; 
+  /** Série para o Kindle agrupar os capítulos (EPUB 3 belongs-to-collection + calibre). */
+  series?: { name: string; position: number };
 }
 export interface EpubFile {
   filename: string;

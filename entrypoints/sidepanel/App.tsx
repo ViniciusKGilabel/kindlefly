@@ -20,7 +20,8 @@ export default function App() {
           {view === 'main' ? '⚙' : '←'}
         </button>
       </header>
-      {view === 'main' ? <Home /> : <Settings />}
+      <Home active={view === 'main'} />
+      {view === 'settings' && <Settings />}
     </div>
   );
 }

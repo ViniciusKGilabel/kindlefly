@@ -92,9 +92,6 @@
   "sending": {
     "message": "Enviando…"
   },
-  "previewLabel": {
-    "message": "Prévia"
-  },
   "retryExtract": {
     "message": "Tentar de novo"
   },
@@ -205,5 +202,26 @@
   },
   "itemsFailed": {
     "message": "Não foi possível gerar (nenhuma página): $1"
+  },
+  "currentPage": {
+    "message": "Página atual"
+  },
+  "refreshPage": {
+    "message": "Atualizar"
+  },
+  "inList": {
+    "message": "Já está na lista (mostrar)"
+  },
+  "closeItem": {
+    "message": "Fechar"
+  },
+  "itemLabel": {
+    "message": "Item da lista"
+  },
+  "rangeClear": {
+    "message": "Limpar"
+  },
+  "currentEmpty": {
+    "message": "Nenhuma página. Clique em Atualizar para ler a página aberta."
   }
 }
